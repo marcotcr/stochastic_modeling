@@ -23,6 +23,9 @@
 \date{Due Date: Thursday, November 13}
 
 \begin{document}
+<<libaries, eval=T, echo=F>>=
+library(ggplot2)
+@
 
 \maketitle
 \subsection*{1}
@@ -128,7 +131,28 @@ hist(samples_y, main="10000 Samples from Posterior")
 
 \subsection*{2}
 <<snoqualmie, eval=T, echo=F>>=
-n <- matrix(c(448, 152, 155, 289), nrow=2, byrow=T)
+y <- scan("snoqualmie.txt", quiet=T)
+# first year is a leap year, but already accounting for that in starting
+# value of "daysum"
+nodays <- rep(c(365,365,365,366),9)
+z <- matrix(0,nrow=36,ncol=30)
+daysum <- 31 + 29 + 31 + 30 + 31
+for (i in 1:36) {
+  if (i > 1) daysum <- nodays[i - 1]
+  z[i,] <- y[daysum+(1:30)]
+}
+n <- matrix(c(0, 0, 0, 0), nrow=2)
+for (i in 1:36) {
+  for (j in 2:30) {
+    if (z[i,j-1] == 0 && z[i,j] == 0) n[1,1] <- n[1,1] + 1
+    if (z[i,j-1] == 0 && z[i,j] > 0) n[1,2] <- n[1,2] + 1
+    if (z[i,j-1] > 0 && z[i,j] == 0) n[2,1] <- n[2,1] + 1
+    if (z[i,j-1] > 0 && z[i,j] > 0) n[2,2] <- n[2,2] + 1
+  }
+}
+n1 <- sum(z == 0)
+n2 <- sum(z > 0)
+total <- length(z)
 nplus <- rowSums(n)
 p.hat <- n / cbind(nplus, nplus)
 var1 <- p.hat[1,2] * (1-p.hat[1,2]) / nplus[1]
@@ -139,9 +163,11 @@ p12.median <- qbeta(0.5, n[1,2] + 1, n[1,1] + 1)
 p21.median <- qbeta(0.5, n[2,1] + 1, n[2,2] + 1)
 bayes.ci1 <- qbeta(c(0.025, 0.975), n[1,2] + 1, n[1,1] + 1)
 bayes.ci2 <- qbeta(c(0.025, 0.975), n[2,1] + 1, n[2,2] + 1)
-p.hat.indep <- colSums(n) / sum(n)
+p.hat.indep <- c(n1, n2) / total
 lrt.stat <- 2 * sum(n * log(p.hat / cbind(p.hat.indep, p.hat.indep)))
 pval <- 1 - pchisq(lrt.stat, df=1)
+log.py.h0 <- lchoose(total, n1) + lgamma(n1 + 1) + lgamma(n2 + 1) - lgamma(total + 2)
+log.py.h1 <- lchoose(nplus[1], n[1,2]) + lchoose(nplus[2], n[2,1]) + lgamma(n[1,1] + 1) + lgamma(n[1,2] + 1) - lgamma(nplus[1] + 2) + lgamma(n[2,1] + 1) + lgamma(n[2,2] + 1) - lgamma(nplus[2] + 2)
 @
 \begin{enumerate}[(a)]
   \item The frequencies are given by: 
@@ -217,9 +243,118 @@ pval <- 1 - pchisq(lrt.stat, df=1)
       &= 2\sum_{i=1}^2\sum_{j=1}^2 n_{ij} \log\left(\frac{n_{ij}/n_{i+}}{n_j/n}\right)\\
       &\approx \Sexpr{lrt.stat}
     \end{align*}
-    Under the null, $T \sim \chi^2_1$, and we have $P(T > \Sexpr{lrt.stat})
+    Under the null, $T \sim \chi^2_1$, and we have $\Pr(T > \Sexpr{lrt.stat})
     \approx \Sexpr{pval}$, so the likelihood ratio test would reject the null
     hypothesis that the weather on each day is independent.\\
+    Under the Bayesian paradigm, we compare the independence assumption with
+    prior $p_1 \sim \mathrm{Beta}(1,1)$ versus the Markov assumption with
+    priors $p_{12} \sim \mathrm{Beta}(1,1)$ and $p_{21} \sim
+    \mathrm{Beta}(1,1)$. Under the independence assumption, the posterior
+    for $p_1$ is
+    \begin{align*}
+      p_1 | n \sim \mathrm{Beta}(n_1 + 1, n_2 + 1)
+    \end{align*}
+    while under the Markov assumption we have, as before,
+    \begin{align*}
+      p_{12} | n_{1\cdot} &\sim \mathrm{Beta}(n_{12} + 1, n_{11} + 1)\\
+      p_{21} | n_{2\cdot} &\sim \mathrm{Beta}(n_{21} + 1, n_{22} + 1)
+    \end{align*}
+    To find the Bayes factor, we must compute $\Pr(y|H_0)$ and $\Pr(y|H_1)$.
+    For $H_0$, we have
+    \begin{align*}
+      \Pr(y|H_0)
+      &= {n \choose n_1} \frac{\Gamma(2)}{\Gamma(1)\Gamma(1)}
+      \frac{\Gamma(n_1 + 1)\Gamma(n_2 + 1)}{\Gamma(n+2)}\\
+      &= {n \choose n_1} \frac{\Gamma(n_1 + 1)\Gamma(n_2 + 1)}{\Gamma(n+2)}\\
+      &\approx \Sexpr{exp(log.py.h0)}
+    \end{align*}
+    while under $H_1$, we have
+    \begin{align*}
+      \Pr(y|H_1)
+      &= \int_0^1 \int_0^1 p_{12}^{n_{12}} (1-p_{12})^{n_{11}} p_{21}^{n_{21}} (1-p_{21})^{n_{22}}
+      \left(\frac{\Gamma(2)}{\Gamma(1)\Gamma(1)}\right)^2 dp_{12} dp_{21}
+      {n_{1+} \choose n_{12}}{n_{2+} \choose n_{21}}\\
+      &= {n_{1+} \choose n_{12}}{n_{2+} \choose n_{21}}
+      \int_0^1 \int_0^1 p_{12}^{n_{12}} (1-p_{12})^{n_{11}} p_{21}^{n_{21}} (1-p_{21})^{n_{22}} dp_{12} dp_{21}\\
+      &= {n_{1+} \choose n_{12}}{n_{2+} \choose n_{21}}
+      \int_0^1 p_{12}^{n_{12}} (1-p_{12})^{n_{11}} dp_{12} \times
+      \int_0^1 p_{21}^{n_{21}} (1-p_{21})^{n_{22}} dp_{21}\\
+      &= {n_{1+} \choose n_{12}}{n_{2+} \choose n_{21}}
+      \frac{\Gamma(n_{12}+1)\Gamma(n_{11}+1)}{\Gamma(n_{1+} + 2)}
+      \cdot \frac{\Gamma(n_{21}+1)\Gamma(n_{22}+1)}{\Gamma(n_{2+} + 2)}\\
+      &\approx \Sexpr{exp(log.py.h1)}
+    \end{align*}
+    The Bayes factor is then
+    \begin{align*}
+      \mathrm{BF} = \frac{\Pr(y|H_0)}{\Pr(y|H_1)}
+      \approx \Sexpr{exp(log.py.h0 - log.py.h1)}
+    \end{align*}
+    Using the Kass and Raftery suggestions for intervals of Bayes Factors, we
+    note that $1/\mathrm{BF} \approx \Sexpr{exp(log.py.h1 - log.py.h0)} < 1$,
+    so we would say there is \textit{not} sufficient evidence against the null
+    hypothesis of independence.
+
+<<snoqualmie-by-year, cache=T, eval=T, echo=F>>=
+p12ByYear <- rep(0, 36)
+p21ByYear <- rep(0, 36)
+l1.hat <- 0
+for (i in 1:36) {
+  n.tmp <- matrix(0, nrow=2, ncol=2)
+  for (j in 2:30) {
+    if (z[i,j-1] == 0 && z[i,j] == 0) n.tmp[1,1] <- n.tmp[1,1] + 1
+    if (z[i,j-1] == 0 && z[i,j] > 0) n.tmp[1,2] <- n.tmp[1,2] + 1
+    if (z[i,j-1] > 0 && z[i,j] == 0) n.tmp[2,1] <- n.tmp[2,1] + 1
+    if (z[i,j-1] > 0 && z[i,j] > 0) n.tmp[2,2] <- n.tmp[2,2] + 1
+  }
+  p12ByYear[i] <- n.tmp[1,2] / sum(n.tmp[1,])
+  p21ByYear[i] <- n.tmp[2,1] / sum(n.tmp[2,])
+  tpm <- matrix(c(1-p12ByYear[i], p12ByYear[i], p21ByYear[i], 1-p21ByYear[i]),
+                nrow=2, byrow=T)
+  l1.hat <- l1.hat + sum(n.tmp * log(tpm))
+}
+l0.hat <- sum(n * log(p.hat))
+lrt.year <- 2 * (l1.hat - l0.hat)
+lrt.df <- 2 * 36 - 2
+pval.year <- 1 - pchisq(lrt.year, df=lrt.df)
+logit <- function(p) { log(p) - log(1-p) }
+plot.df <- data.frame(logit=c(logit(p12ByYear), logit(p21ByYear)),
+                      year=rep(1:36, 2),
+                      prob=rep(c("p12", "p21"), rep(36, 2)))
+@
+  \item Estimating the probabilites $p_{12}$ and $p_{21}$ in each year by the
+    MLE, we have below a plot of the logits of the probabilities,
+    \begin{center}
+<<snoqualmie-logit-plot, eval=T, echo=F, figure=T, fig.height=4, fig.width=6>>=
+ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
+  geom_line(aes(linetype=prob, color=prob))
+@
+    \end{center}
+    To test the null hypothesis that the transition probabilities are the same
+    every year versus the alternative that they are different every year, we
+    need to find $\hat\ell_0$ and $\hat\ell_1$. Letting $n_{ij}^{(k)}$ be the
+    number of transitions from state $i$ to state $j$ in year $k$ and
+    $p_{ij}^{(k)}$ the transition probabilities for year $k$, we have
+    \begin{align*}
+      \hat\ell_1
+      = \sum_{k=1}^{36} \sum_{i=1}^2 \sum_{j=1}^2 n_{ij}^{(k)} \log \hat{p}_{ij}^{(k)}
+      \approx \Sexpr{l1.hat}
+    \end{align*}
+    whereas for $\hat\ell_0$, we have
+    \begin{align*}
+      \hat\ell_0
+      = \sum_{i=1}^2 \sum_{j=1}^2 n_{ij} \log \hat{p}_{ij}
+      \approx \Sexpr{l0.hat}
+    \end{align*}
+    giving us a likelihood ratio test statistic of
+    \begin{align*}
+      T = 2(\hat\ell_1 - \hat\ell_0) = \Sexpr{lrt.year}
+    \end{align*}
+    which follows a $\chi^2_{lrt.df}$, where the degrees of freedom arise
+    from the fact that under $H_1$ we have $2 \times 36 = 72$ parameters to
+    estiamte and under $H_0$ we have only $2$ parameters. With $T \sim
+    \chi^2_{lrt.df}$, we have $\Pr(T > \Sexpr{lrt.year}) \approx
+    \Sexpr{pval.year}$, so we would not reject the null hypothesis that there
+    are common transition probabilities across years.\\
     Under the Bayesian paradigm, \ldots
 
 \end{enumerate}
