@@ -17,6 +17,7 @@
 \newcommand{\Cov}{\mathrm{Cov}}
 \newcommand{\tr}{\mathrm{tr}}
 \newcommand{\indep}{\perp\!\!\!\perp}
+\newcommand{\Indicator}[1]{\mathbbm{1}_{\{#1\}}}
 
 \title{\textbf{Stat 516}\\Homework 5}
 \author{Alden Timme and Marco Ribeiro}
@@ -387,6 +388,58 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
     which, by the suggested intervals of Kass and Raftery, does \textit{not}
     suggest evidence to reject the null hypothesis that transition
     probabilities are common across years.
+
+\end{enumerate}
+
+\subsection*{3}
+\begin{enumerate}[(a)]
+  \item In the $3 \times 3$ case, with $\mathbf{P} = p_{ij}$ unrestricted, we
+    can ``parameterize'' the transition probability matrix as
+    \begin{align*}
+      \left[\begin{array}{ccc}
+          p_{11} & p_{12} & 1 - p_{11} - p_{12} \\
+          p_{21} & p_{22} & 1 - p_{21} - p_{22} \\
+          p_{31} & p_{32} & 1 - p_{31} - p_{32}
+      \end{array} \right]
+    \end{align*}
+    with parameters $p_{ij}$ with $i \in \{1,2,3\}$ and $j \in \{1,2\}$.\\
+    Using the results on parametric transition probabilities, we use the
+    score equations
+    \begin{align*}
+      \frac{\partial \ell}{\partial \theta_k}
+      = \sum_{i,j \in S} \frac{n_{ij}}{p_{ij}(\theta)}
+      \frac{\partial p_{ij}(\theta)}{\partial \theta_k} = 0
+    \end{align*}
+    With $\theta = \{p_{ij} \vert i \in \{1,2,3\}, j \in \{1,2\}\}$, we have
+    for $i \in \{1,2,3\}$,
+    \begin{align*}
+      \frac{\partial \ell}{\partial p_{i1}}
+      &= \frac{n_{i1}}{p_{i1}} - \frac{n_{i3}}{1 - p_{i1} - p_{i2}} = 0\\
+      \frac{\partial \ell}{\partial p_{i2}}
+      &= \frac{n_{i2}}{p_{i2}} - \frac{n_{i3}}{1 - p_{i1} - p_{i2}} = 0
+    \end{align*}
+    yielding
+    \begin{align*}
+      n_{i1} - n_{i1}p_{i1} - n_{i1}p_{i2} = n_{i3}p_{i1}
+      &\Rightarrow p_{i1} = \frac{n_{i1} - n_{i1}p_{i2}}{n_{i1} + n_{i3}}\\
+      n_{i2} - n_{i2}p_{i1} - n_{i2}p_{i2} &= n_{i3}p_{i2}\\
+      n_{i2} - n_{i2}\left(\frac{n_{i1} - n_{i1}p_{i2}}{n_{i1} + n_{i3}}\right) - n_{i2}p_{i2} &= n_{i3}p_{i2}\\
+      n_{i1}n_{i2} + n_{i2}n_{i3} - n_{i1}n_{i2} + n_{i1}n_{i2}p_{i2} - n_{i1}n_{i2}p_{i2} - n_{i2}n_{i3}p_{i2} &= n_{i1}n_{i3}p_{i2} + n_{i3}^2p_{i2}\\
+      n_{i2}n_{i3} - n_{i2}n_{i3}p_{i2} &= n_{i1}n_{i3}p_{i2} + n_{i3}^2p_{i2}\\
+      (n_{i1} + n_{i2} + n_{i3})n_{i3}p_{i2} &= n_{i2}n_{i3}\\
+      p_{i2} &= \frac{n_{i2}}{n_{i1}+n_{i2}+n_{i3}}
+    \end{align*}
+    and thus
+    \begin{align*}
+      \hat{p}_{i2} &= \frac{n_{i2}}{n_{i1}+n_{i2}+n_{i3}}\\
+      \hat{p}_{i1} &= \frac{n_{i1} - n_{i1}\left(\frac{n_{i2}}{n_{i1}+n_{i2}+n_{i3}}\right)}{n_{i1} + n_{i3}}\\
+      &= \frac{n_{i1}n_{i1} + n_{i1}n_{i2} + n_{i1}n_{i3} - n_{i1}n_{i2}}{(n_{i1} + n_{i3})(n_{i1} + n_{i2} + n_{i3})}\\
+      &= \frac{n_{i1}(n_{i1} + n_{i3})}{(n_{i1} + n_{i3})(n_{i1} + n_{i2} + n_{i3})}\\
+      &= \frac{n_{i1}}{n_{i1} + n_{i2} + n_{i3}}
+    \end{align*}
+    for $i = \{1,2,3\}$, assuming $n_{ij} > 0$ for all $i,j \in S$, which is
+    what we expected.
+    % TODO: continue with getting covariance from Fisher information matrix...
 
 \end{enumerate}
 
