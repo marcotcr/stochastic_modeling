@@ -106,7 +106,7 @@ set.seed(35)
 samples_y <- rgamma(10000, atilde, btilde)
 interval.lower <- qgamma(0.025, atilde, btilde)
 interval.upper <- qgamma(0.975, atilde, btilde)
-hist(samples, main="10000 Samples from Posterior")
+hist(samples_y, main="10000 Samples from Posterior")
 @
     \end{center}
     A $95\%$ credible interval using the $0.025$- and $0.975$-quantiles is
@@ -128,7 +128,7 @@ hist(samples, main="10000 Samples from Posterior")
 
 \subsection*{2}
 <<snoqualmie, eval=T, echo=F>>=
-n <- matrix(c(186, 123, 128, 643), nrow=2, byrow=T)
+n <- matrix(c(448, 152, 155, 289), nrow=2, byrow=T)
 nplus <- rowSums(n)
 p.hat <- n / cbind(nplus, nplus)
 var1 <- p.hat[1,2] * (1-p.hat[1,2]) / nplus[1]
@@ -144,7 +144,14 @@ lrt.stat <- 2 * sum(n * log(p.hat / cbind(p.hat.indep, p.hat.indep)))
 pval <- 1 - pchisq(lrt.stat, df=1)
 @
 \begin{enumerate}[(a)]
-  \item MLEs of $p_{12}$ $p_{21}$ are given by
+  \item The frequencies are given by: 
+  \[
+    \left[ \begin{array}{cc}
+    448 & 152 \\ 
+    155 & 289 \end{array}
+    \right]
+  \]
+  MLEs of $p_{12}$ $p_{21}$ are given by
     \begin{align*}
       \hat{p}_{12} &= \frac{n_{12}}{n_{1+}}
       = \frac{\Sexpr{n[1,2]}}{\Sexpr{sum(n[1,])}}
