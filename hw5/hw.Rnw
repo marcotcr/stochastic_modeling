@@ -138,7 +138,7 @@ nodays <- rep(c(365,365,365,366),9)
 z <- matrix(0,nrow=36,ncol=30)
 daysum <- 31 + 29 + 31 + 30 + 31
 for (i in 1:36) {
-  if (i > 1) daysum <- nodays[i - 1]
+  if (i > 1) daysum <- daysum +  nodays[i - 1]
   z[i,] <- y[daysum+(1:30)]
 }
 n <- matrix(c(0, 0, 0, 0), nrow=2)
