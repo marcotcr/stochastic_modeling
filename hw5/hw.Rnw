@@ -157,6 +157,8 @@ bayes.ci2 <- qbeta(c(0.025, 0.975), n[2,1] + 1, n[2,2] + 1)
 p.hat.indep <- colSums(n) / sum(n)
 lrt.stat <- 2 * sum(n * log(p.hat / cbind(p.hat.indep, p.hat.indep)))
 pval <- 1 - pchisq(lrt.stat, df=1)
+log.py.h0 <- lchoose(sum(n), nplus[1]) + lgamma(nplus[1] + 1) + lgamma(nplus[2] + 1) - lgamma(sum(n) + 2)
+log.py.h1 <- lchoose(nplus[1], n[1,2]) + lchoose(nplus[2], n[2,1]) + lgamma(n[1,1] + 1) + lgamma(n[1,2] + 1) - lgamma(nplus[1] + 2) + lgamma(n[2,1] + 1) + lgamma(n[2,2] + 1) - lgamma(nplus[2] + 2)
 @
 \begin{enumerate}[(a)]
   \item MLEs of $p_{12}$ $p_{21}$ are given by
@@ -228,7 +230,53 @@ pval <- 1 - pchisq(lrt.stat, df=1)
     Under the null, $T \sim \chi^2_1$, and we have $P(T > \Sexpr{lrt.stat})
     \approx \Sexpr{pval}$, so the likelihood ratio test would reject the null
     hypothesis that the weather on each day is independent.\\
-    Under the Bayesian paradigm, \ldots
+    Under the Bayesian paradigm, we compare the independence assumption with
+    prior $p_1 \sim \mathrm{Beta}(1,1)$ versus the Markov assumption with
+    priors $p_{12} \sim \mathrm{Beta}(1,1)$ and $p_{21} \sim
+    \mathrm{Beta}(1,1)$. Under the independence assumption, the posterior
+    for $p_1$ is
+    \begin{align*}
+      p_1 | n \sim \mathrm{Beta}(n_1 + 1, n_2 + 1)
+    \end{align*}
+    while under the Markov assumption we have, as before,
+    \begin{align*}
+      p_{12} | n_{1\cdot} &\sim \mathrm{Beta}(n_{12} + 1, n_{11} + 1)\\
+      p_{21} | n_{2\cdot} &\sim \mathrm{Beta}(n_{21} + 1, n_{22} + 1)
+    \end{align*}
+    To find the Bayes factor, we must compute $\Pr(y|H_0)$ and $\Pr(y|H_1)$.
+    For $H_0$, we have
+    \begin{align*}
+      \Pr(y|H_0)
+      &= {n \choose n_1} \frac{\Gamma(2)}{\Gamma(1)\Gamma(1)}
+      \frac{\Gamma(n_1 + 1)\Gamma(n_2 + 1)}{\Gamma(n+2)}\\
+      &= {n \choose n_1} \frac{\Gamma(n_1 + 1)\Gamma(n_2 + 1)}{\Gamma(n+2)}\\
+      &\approx \Sexpr{exp(log.py.h0)}
+    \end{align*}
+    while under $H_1$, we have
+    \begin{align*}
+      \Pr(y|H_1)
+      &= \int_0^1 \int_0^1 p_{12}^{n_{12}} (1-p_{12})^{n_{11}} p_{21}^{n_{21}} (1-p_{21})^{n_{22}}
+      \left(\frac{\Gamma(2)}{\Gamma(1)\Gamma(1)}\right)^2 dp_{12} dp_{21}
+      {n_{1+} \choose n_{12}}{n_{2+} \choose n_{21}}\\
+      &= {n_{1+} \choose n_{12}}{n_{2+} \choose n_{21}}
+      \int_0^1 \int_0^1 p_{12}^{n_{12}} (1-p_{12})^{n_{11}} p_{21}^{n_{21}} (1-p_{21})^{n_{22}} dp_{12} dp_{21}\\
+      &= {n_{1+} \choose n_{12}}{n_{2+} \choose n_{21}}
+      \int_0^1 p_{12}^{n_{12}} (1-p_{12})^{n_{11}} dp_{12} \times
+      \int_0^1 p_{21}^{n_{21}} (1-p_{21})^{n_{22}} dp_{21}\\
+      &= {n_{1+} \choose n_{12}}{n_{2+} \choose n_{21}}
+      \frac{\Gamma(n_{12}+1)\Gamma(n_{11}+1)}{\Gamma(n_{1+} + 2)}
+      \cdot \frac{\Gamma(n_{21}+1)\Gamma(n_{22}+1)}{\Gamma(n_{2+} + 2)}\\
+      &\approx \Sexpr{exp(log.py.h1)}
+    \end{align*}
+    The Bayes factor is then
+    \begin{align*}
+      \mathrm{BF} = \frac{\Pr(y|H_0)}{\Pr(y|H_1)}
+      \approx \Sexpr{exp(log.py.h0 - log.py.h1)}
+    \end{align*}
+    Using the Kass and Raftery suggestions for intervals of Bayes Factors, we
+    note that $1/\mathrm{BF} \approx \Sexpr{exp(log.py.h1 - log.py.h0)} < 1$,
+    so we would say there is \textit{not} sufficient evidence against the null
+    hypothesis of independence.
 
 \end{enumerate}
 
