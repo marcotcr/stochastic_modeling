@@ -125,7 +125,25 @@ hist(samples, main="10000 Samples from Posterior")
 
 \subsection*{2}
 <<snoqualmie, eval=T, echo=F>>=
-n <- matrix(c(186, 123, 128, 643), nrow=2, byrow=T)
+y <- scan("snoqualmie.txt", quiet=T)
+# first year is a leap year, but already accounting for that in starting
+# value of "daysum"
+nodays <- rep(c(365,365,365,366),9)
+z <- matrix(0,nrow=36,ncol=30)
+daysum <- 31 + 29 + 31 + 30 + 31
+for (i in 1:36) {
+  if (i > 1) daysum <- nodays[i-1]
+  z[i,] <- y[daysum+(1:30)]
+}
+n <- matrix(c(0, 0, 0, 0), nrow=2)
+for (i in 1:36) {
+  for (j in 2:30) {
+    if (z[i,j-1] == 0 && z[i,j] == 0) n[1,1] <- n[1,1] + 1
+    if (z[i,j-1] == 0 && z[i,j] > 0) n[1,2] <- n[1,2] + 1
+    if (z[i,j-1] > 0 && z[i,j] == 0) n[2,1] <- n[2,1] + 1
+    if (z[i,j-1] > 0 && z[i,j] > 0) n[2,2] <- n[2,2] + 1
+  }
+}
 nplus <- rowSums(n)
 p.hat <- n / cbind(nplus, nplus)
 var1 <- p.hat[1,2] * (1-p.hat[1,2]) / nplus[1]
