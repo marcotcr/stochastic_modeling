@@ -38,11 +38,12 @@
     \begin{align*}
       \ell(\theta) = \log L(\theta) = y\log(E\theta) - \log(y!) - E\theta
     \end{align*}
+
     To find Fisher's (expected) information $I(\theta)$, we use $I(\theta) =
     -\E\left[\ddot\ell(\theta)\right]$,
     \begin{align*}
       \ell(\theta) &= y\log E + y\log \theta - \log(y!) - E\theta\\
-      \dot\ell(\theta) &= \frac{y}{\theta} - E\\
+      \dot\ell(\theta) &= S(\theta) =  \frac{y}{\theta} - E\\
       \ddot\ell(\theta) &= -\frac{y}{\theta^2}\\
       I(\theta) &= -\E\left[\ell''(\theta)\right] = -\E\left[-\frac{Y}{\theta^2}\right] = \frac{1}{\theta^2} \E[Y] = \frac{E}{\theta}
     \end{align*}
@@ -102,7 +103,7 @@ E <- 0.25
 atilde <- a + y
 btilde <- b + E
 set.seed(35)
-samples <- rgamma(10000, atilde, btilde)
+samples_y <- rgamma(10000, atilde, btilde)
 interval.lower <- qgamma(0.025, atilde, btilde)
 interval.upper <- qgamma(0.975, atilde, btilde)
 hist(samples, main="10000 Samples from Posterior")
@@ -118,8 +119,10 @@ hist(samples, main="10000 Samples from Posterior")
     we would say there \textit{is} evidence of excess risk for these data,
     because the $95\%$ credible interval does not contain $\theta = 1$
     (``null'' risk).
-    % TODO(Alden):
-    % "discuss" the differences between the likelihood-based and Bayesian analyses
+    
+    Since we only have one observation, the confidence interval
+    from the MLE is very wide. The prior in the Bayesian analysis acts as if we
+    had ``previous observations'', thus tightening the confidence interval.
 
 \end{enumerate}
 
