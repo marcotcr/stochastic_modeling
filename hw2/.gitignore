@@ -1,0 +1,6 @@
+.DS_Store
+cache
+figure
+*.aux
+*.log
+*.tex
