@@ -1,0 +1,126 @@
+\documentclass[10pt]{article}
+\usepackage{graphicx}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{bbm}
+\usepackage{listings}
+\usepackage{enumerate}
+\usepackage{float}
+\usepackage{rotating}
+
+\lstset{numbers=left, frame=single, basicstyle=\small\ttfamily}
+
+\usepackage[margin=1in]{geometry}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\tr}{\mathrm{tr}}
+\newcommand{\indep}{\perp\!\!\!\perp}
+
+\title{\textbf{Stat 516}\\Homework 5}
+\author{Alden Timme and Marco Ribeiro}
+\date{Due Date: Thursday, November 13}
+
+\begin{document}
+
+\maketitle
+\subsection*{1}
+\begin{enumerate}[(a)]
+  \item For the model $Y\vert \theta \sim \mathrm{Poisson}(E \times \theta)$,
+    where $E$ is the ``expected'' number of cases, $Y$ is the count of
+    disease cases, and $\theta > 0$ is the relative risk, we have the
+    likelihood function
+    \begin{align*}
+      L(\theta) = p_\theta(Y=y) = \frac{(E\theta)^y}{y!}e^{-E\theta}
+    \end{align*}
+    which yields the log likelihood
+    \begin{align*}
+      \ell(\theta) = \log L(\theta) = y\log(E\theta) - \log(y!) - E\theta
+    \end{align*}
+    To find Fisher's (expected) information $I(\theta)$, we use $I(\theta) =
+    -\E\left[\ddot\ell(\theta)\right]$,
+    \begin{align*}
+      \ell(\theta) &= y\log E + y\log \theta - \log(y!) - E\theta\\
+      \dot\ell(\theta) &= \frac{y}{\theta} - E\\
+      \ddot\ell(\theta) &= -\frac{y}{\theta^2}\\
+      I(\theta) &= -\E\left[\ell''(\theta)\right] = -\E\left[-\frac{Y}{\theta^2}\right] = \frac{1}{\theta^2} \E[Y] = \frac{E}{\theta}
+    \end{align*}
+    Maximizing $\ell(\theta)$ to find the MLE, we have
+    \begin{align*}
+      \hat\theta &= \frac{y}{E}
+    \end{align*}
+    The variance of the MLE $\hat\theta$ is then given by
+    \begin{align*}
+      \Var(\hat\theta) &= I(\theta)^{-1} = \frac{\theta}{E}
+    \end{align*}
+
+  \item If we assume a prior of $\theta \sim \mathrm{Gamma}(a,b)$, we have
+    \begin{align*}
+      p(\theta|y)
+      &\propto p(y|\theta) p(\theta)\\
+      &\propto \theta^y e^{-E\theta} \theta^{a-1} e^{-b\theta}\\
+      &= \theta^{y+a-1}e^{-(E+b)\theta}
+    \end{align*}
+    so we see $\theta|y \sim \mathrm{Gamma}(y+a, E+b)$.
+
+  \item When we see $y = 4$ cases of leukemia with an expected number
+    $E = 0.25$, the MLE is
+    \begin{align*}
+      \hat\theta &= \frac{y}{E} = 16
+    \end{align*}
+    with variance
+    \begin{align*}
+      \Var(\hat\theta) &= \frac{\theta}{E} = 64
+    \end{align*}
+    Since the MLE is asymptotically normal, we can approximate the $95\%$
+    confidence interval with a normal distribution,
+    \begin{align*}
+      \hat\theta \pm 1.96 \times \sqrt{\Var(\hat\theta)}
+      &= 16 \pm 1.96 \times 8
+      \approx (\Sexpr{16 - 1.96 * 8}, \Sexpr{16 + 1.96 * 8})
+    \end{align*}
+
+  \item To find the $a$ and $b$ which give a gamma prior with $90\%$ interval
+    $[0.1,10]$, we use the R function \texttt{optim},
+<<gamma-prior-params, cache=T, eval=T, echo=T>>=
+priorch <- function(x, q1, q2, p1, p2) {
+  (p1 - pgamma(q1, x[1], x[2]))^2 + (p2 - pgamma(q2, x[1], x[2]))^2
+}
+opt <- optim(par=c(1,1), fn=priorch, q1=0.1, q2=10, p1=0.05, p2=0.95)
+a <- opt$par[1]
+b <- opt$par[2]
+@
+    yielding $a=\Sexpr{a}$ and $b=\Sexpr{b}$.\\
+    Using this prior and the data from part (c), we arrive at a posterior
+    of $\theta | y \sim \mathrm{Gamma}(\Sexpr{4+a}, \Sexpr{0.25+b})$. Sampling
+    from this distribution $1000$ times, we get the following histogram,
+    \begin{center}
+<<gamma-posterior-histogram, cache=T, eval=T, figure=T, echo=F, fig.height=5, fig.width=5>>=
+y <- 4
+E <- 0.25
+atilde <- a + y
+btilde <- b + E
+set.seed(35)
+samples <- rgamma(10000, atilde, btilde)
+interval.lower <- qgamma(0.025, atilde, btilde)
+interval.upper <- qgamma(0.975, atilde, btilde)
+hist(samples, main="10000 Samples from Posterior")
+@
+    \end{center}
+    A $95\%$ credible interval using the $0.025$- and $0.975$-quantiles is
+    $(\Sexpr{interval.lower}, \Sexpr{interval.upper})$.
+
+  \item Using the $95\%$ confidence interval from the MLE and its variance, we
+    would say there is \textit{not} evidence of excess risk for these data,
+    because the value $\theta = 1$ corresponding to ``null'' risk is contained
+    in the asymptotic $95\%$ confidence interval. From the Bayesian analysis,
+    we would say there \textit{is} evidence of excess risk for these data,
+    because the $95\%$ credible interval does not contain $\theta = 1$
+    (``null'' risk).
+    % TODO(Alden):
+    % "discuss" the differences between the likelihood-based and Bayesian analyses
+
+\end{enumerate}
+
+\end{document}
