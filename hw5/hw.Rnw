@@ -352,12 +352,13 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
     \begin{align*}
       T = 2(\hat\ell_1 - \hat\ell_0) = \Sexpr{lrt.year}
     \end{align*}
-    which follows a $\chi^2_{lrt.df}$, where the degrees of freedom arise
+    which follows a $\chi^2_{\Sexpr{lrt.df}}$, where the degrees of freedom arise
     from the fact that under $H_1$ we have $2 \times 36 = 72$ parameters to
-    estiamte and under $H_0$ we have only $2$ parameters. With $T \sim
-    \chi^2_{lrt.df}$, we have $\Pr(T > \Sexpr{lrt.year}) \approx
-    \Sexpr{pval.year}$, so we would not reject the null hypothesis that there
-    are common transition probabilities across years.\\
+    estimate and under $H_0$ we have only $2$ parameters. With $T \sim
+    \chi^2_{\Sexpr{lrt.df}}$, we have $\Pr(T > \Sexpr{lrt.year}) \approx
+    \Sexpr{pval.year}$, so we would reject the null hypothesis that there
+    are common transition probabilities across years (if we assume a cut-off
+    of $0.05$).\\
     Under the Bayesian paradigm, we assume $\mathrm{Beta}(1,1)$ priors for
     $p_{12}$, $p_{21}$, and $p_{12}^{(k)}$ and $p_{21}^{(k)}$ for all years
     $k = 1,\ldots,36$. To determine the Bayes factor, we must compute
