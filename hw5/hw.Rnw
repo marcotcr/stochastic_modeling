@@ -151,10 +151,10 @@ for (i in 1:36) {
     if (z[i,j-1] > 0 && z[i,j] > 0) n[2,2] <- n[2,2] + 1
   }
 }
-n1 <- sum(z == 0)
-n2 <- sum(z > 0)
-total <- length(z)
+nsum = sum(n)
 nplus <- rowSums(n)
+n1  = colSums(n)[1]
+n2  = colSums(n)[2]
 p.hat <- n / cbind(nplus, nplus)
 var1 <- p.hat[1,2] * (1-p.hat[1,2]) / nplus[1]
 ci1 <- p.hat[1,2] + c(-1,1) * 1.96 * sqrt(var1)
@@ -164,10 +164,10 @@ p12.median <- qbeta(0.5, n[1,2] + 1, n[1,1] + 1)
 p21.median <- qbeta(0.5, n[2,1] + 1, n[2,2] + 1)
 bayes.ci1 <- qbeta(c(0.025, 0.975), n[1,2] + 1, n[1,1] + 1)
 bayes.ci2 <- qbeta(c(0.025, 0.975), n[2,1] + 1, n[2,2] + 1)
-p.hat.indep <- c(n1, n2) / total
-lrt.stat <- 2 * sum(n * log(p.hat / cbind(p.hat.indep, p.hat.indep)))
+p.hat.indep <- c(n1, n2) / nsum
+lrt.stat <- 2 * sum(n * log(p.hat / rbind(p.hat.indep, p.hat.indep)))
 pval <- 1 - pchisq(lrt.stat, df=1)
-log.py.h0 <- lchoose(total, n1) + lgamma(n1 + 1) + lgamma(n2 + 1) - lgamma(total + 2)
+log.py.h0 <- lchoose(nplus[1], n[1,2]) + lchoose(nplus[2], n[2,1]) + lgamma(n1 + 1) + lgamma(n2 + 1) - lgamma(nsum + 2)
 log.py.h1 <- lchoose(nplus[1], n[1,2]) + lchoose(nplus[2], n[2,1]) + lgamma(n[1,1] + 1) + lgamma(n[1,2] + 1) - lgamma(nplus[1] + 2) + lgamma(n[2,1] + 1) + lgamma(n[2,2] + 1) - lgamma(nplus[2] + 2)
 @
 \begin{enumerate}[(a)]
@@ -291,8 +291,8 @@ log.py.h1 <- lchoose(nplus[1], n[1,2]) + lchoose(nplus[2], n[2,1]) + lgamma(n[1,
       \approx \Sexpr{exp(log.py.h0 - log.py.h1)}
     \end{align*}
     Using the Kass and Raftery suggestions for intervals of Bayes Factors, we
-    note that $1/\mathrm{BF} \approx \Sexpr{exp(log.py.h1 - log.py.h0)} < 1$,
-    so we would say there is \textit{not} sufficient evidence against the null
+    note that $1/\mathrm{BF} \approx \Sexpr{exp(log.py.h1 - log.py.h0)} > 150$,
+    so we would say there is strong evidence against the null
     hypothesis of independence.
 
 <<snoqualmie-by-year, cache=T, eval=T, echo=F>>=
