@@ -264,9 +264,9 @@ log.py.h1 <- lchoose(nplus[1], n[1,2]) + lchoose(nplus[2], n[2,1]) + lgamma(n[1,
     $\Pr(\mathbf{n}|H_1)$. For $H_0$, we have
     \begin{align*}
       \Pr(\mathbf{n}|H_0)
-      &= {n \choose n_1} \frac{\Gamma(2)}{\Gamma(1)\Gamma(1)}
+      &= {n_{1+} \choose n_{12}} {n_{2+} \choose n_{21}} \frac{\Gamma(2)}{\Gamma(1)\Gamma(1)}
       \frac{\Gamma(n_1 + 1)\Gamma(n_2 + 1)}{\Gamma(n+2)}\\
-      &= {n \choose n_1} \frac{\Gamma(n_1 + 1)\Gamma(n_2 + 1)}{\Gamma(n+2)}\\
+      &= {n_{1+} \choose n_{12}} {n_{2+} \choose n_{21}} \frac{\Gamma(n_1 + 1)\Gamma(n_2 + 1)}{\Gamma(n+2)}\\
       &\approx \Sexpr{exp(log.py.h0)}
     \end{align*}
     while under $H_1$, we have
