@@ -456,7 +456,7 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
     \end{align*}
     We now find the $6 \times 6$ joint asymptotic covariance matrix for
     the MLE $\hat\theta$. We first find the Fisher information, denoting
-    $\Info_{(ij,kl)}$ the covariance between $\hat{p}_{ij}$ and $\hat{p}_{kl}$.
+    $\Info_{(ij,kl)}^{-1}$ the asymptotic covariance between $\hat{p}_{ij}$ and $\hat{p}_{kl}$.
     First, note that $\Info_{(ij,kl)} = 0$ for $i \ne k$, leaving a block
     diagonal Fisher information matrix. Thus, we take as example the covariance
     submatrix for $p_{11}$ and $p_{12}$, knowing the rest of the matrix follows
@@ -563,8 +563,24 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
       \end{array} \right]
     \end{align*}
 
-  % TODO
   \item
+  As expected, the matrix is block diagonal - meaning that the parameters for
+  one row are independent of the parameters in another row. This is what we
+  would expect, as the markov property dictates that the transitions from a
+  state $i$ only depend on $i$.
+
+  Also, the variance of the estimators we get for the transition probabilities
+  for state $i$ is inversely proportional to $\pi_i$. This is also expected, as
+  small $\pi_i$ means we see transitions from this state less often, and thus
+  are less confident in our estimators.
+
+  Finally, the asymptotic covariance matrix for each state (i.e. each block in
+  the matrix) resembles the covariance matrix of a multinomial (minus the number
+  of trials), with negative covariance in off-diagonal entries. This also makes
+  sense. If we look at just one state, the outgoing frequencies are like draws
+  from a multinomial, where the categories are the possible outgoing states.
+  Obviously, if one outgoing state has high frequency, the others will have to
+  have lower frequencies.
 
 \end{enumerate}
 
