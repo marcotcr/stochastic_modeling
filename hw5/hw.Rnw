@@ -394,7 +394,9 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
 \subsection*{3}
 \begin{enumerate}[(a)]
   \item In the $3 \times 3$ case, with $\mathbf{P} = p_{ij}$ unrestricted, we
-    can ``parameterize'' the transition probability matrix as
+    can ``parameterize'' the transition probabilities with
+    $\theta = (p_{11}, p_{12}, p_{21}, p_{22}, p_{31}, p_{32})$, yielding
+    the transition probability matrix
     \begin{align*}
       \left[\begin{array}{ccc}
           p_{11} & p_{12} & 1 - p_{11} - p_{12} \\
@@ -402,7 +404,6 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
           p_{31} & p_{32} & 1 - p_{31} - p_{32}
       \end{array} \right]
     \end{align*}
-    with parameters $p_{ij}$ with $i \in \{1,2,3\}$ and $j \in \{1,2\}$.\\
     Using the results on parametric transition probabilities, we use the
     score equations
     \begin{align*}
@@ -410,7 +411,8 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
       = \sum_{i,j \in S} \frac{n_{ij}}{p_{ij}(\theta)}
       \frac{\partial p_{ij}(\theta)}{\partial \theta_k} = 0
     \end{align*}
-    With $\theta = \{p_{ij} \vert i \in \{1,2,3\}, j \in \{1,2\}\}$, we have
+    to find the optimal $\hat\theta$.\\
+    With $\theta = (p_{11}, p_{12}, p_{21}, p_{22}, p_{31}, p_{32})$, we have
     for $i \in \{1,2,3\}$,
     \begin{align*}
       \frac{\partial \ell}{\partial p_{i1}}
@@ -438,7 +440,19 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
       &= \frac{n_{i1}}{n_{i1} + n_{i2} + n_{i3}}
     \end{align*}
     for $i = \{1,2,3\}$, assuming $n_{ij} > 0$ for all $i,j \in S$, which is
-    what we expected.
+    what we expected. That is,
+    \begin{align*}
+      \hat\theta
+      &= (\hat{p}_{11}, \hat{p}_{12}, \hat{p}_{21}, \hat{p}_{22}, \hat{p}_{31}, \hat{p}_{32})\\
+      &= \left(
+        \frac{n_{11}}{n_{1+}},
+        \frac{n_{12}}{n_{1+}}
+        \frac{n_{21}}{n_{2+}},
+        \frac{n_{22}}{n_{2+}},
+        \frac{n_{31}}{n_{3+}},
+        \frac{n_{32}}{n_{3+}}
+      \right)
+    \end{align*}
     % TODO: continue with getting covariance from Fisher information matrix...
 
 \end{enumerate}
