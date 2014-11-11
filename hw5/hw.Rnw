@@ -454,8 +454,7 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
         \frac{n_{32}}{n_{3+}}
       \right)
     \end{align*}
-    % TODO: continue with getting covariance from Fisher information matrix...
-    We now find the $6$ $\times$ $6$ joint asymptotic covariance matrix for
+    We now find the $6 \times 6$ joint asymptotic covariance matrix for
     the MLE $\hat\theta$. We first find the Fisher information, denoting
     $\Info_{(ij,kl)}$ the covariance between $\hat{p}_{ij}$ and $\hat{p}_{kl}$.
     First, note that $\Info_{(ij,kl)} = 0$ for $i \ne k$, leaving a block
@@ -525,6 +524,47 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
         -p_{i1}p_{i2} & p_{i2}(1-p_{i2})
       \end{array} \right]
     \end{align*}
+
+  \item For the $9 \times 9$ joint asymptotic covariance matrix for the MLE
+    $(\hat{p}_{11}, \hat{p}_{12}, \hat{p}_{13}, \hat{p}_{21}, \hat{p}_{22},
+    \hat{p}_{23}, \hat{p}_{31}, \hat{p}_{32}, \hat{p}_{33})$, we again have
+    a block diagonal matrix with $3$ blocks. We have the terms
+    $\Var(\hat{p}_{i1})$, $\Cov(\hat{p}_{i1}, \hat{p}_{i2})$,
+    and $\Var(\hat{p}_{i2})$. Noting that $\hat{p}_{i3} = 1 - \hat{p}_{i1} -
+    \hat{p}_{i2}$, we have
+    \begin{align*}
+      \Var(\hat{p}_{i3})
+      &= \Var(1 - \hat{p}_{i1} - \hat{p}_{i2})\\
+      &= \Var(\hat{p}_{i1}) + \Var(\hat{p}_{i2}) + 2\Cov(\hat{p}_{i1},\hat{p}_{i2})\\
+      &= \frac{1}{\pi_i}\left(p_{i1}(1-p_{i1}) + p_{i2}(1-p_{i2}) - 2p_{i1}p_{i2}\right)\\
+      &= \frac{1}{\pi_i}\left(p_{i1}-p_{i1}^2 + p_{i2}-p_{i2}^2 - 2p_{i1}p_{i2}\right)\\
+      &= \frac{1}{\pi_i}\left(p_{i1} + p_{i2} - (p_{i1} + p_{i2})^2\right)\\
+      &= \frac{1}{\pi_i}\left((1 - p_{i1} - p_{i2})(p_{i1} + p_{i2})\right)\\
+      &= \frac{1}{\pi_i}\left(p_{i3}(1-p_{i3})\right)\\
+      \Cov(\hat{p}_{i1}, \hat{p}_{i3})
+      &= \Cov(\hat{p}_{i1}, 1 - \hat{p}_{i1} - \hat{p}_{i2})\\
+      &= -\Var(\hat{p}_{i1}) - \Cov(\hat{p}_{i1}, \hat{p}_{i2})\\
+      &= \frac{1}{\pi_i}\left(-p_{i1}(1-p_{i1}) + p_{i1}p_{i2}\right)\\
+      &= \frac{1}{\pi_i}\left(-p_{i1}(1-p_{i1} - p_{i2})\right)\\
+      &= \frac{1}{\pi_i}\left(-p_{i1} p_{i3}\right)\\
+      \Cov(\hat{p}_{i2}, \hat{p}_{i3})
+      &= \frac{1}{\pi_i}\left(-p_{i2} p_{i3}\right)
+    \end{align*}
+    where the last term is arrived at by analogous reasoning to
+    $\Cov(\hat{p}_{i1}, \hat{p}_{i3})$.\\
+    Thus, we have that the joint asymptotic covariance matrix is block
+    diagonal, with $3$ blocks, where the $i^{th}$ block is given by
+    \begin{align*}
+      \frac{1}{\pi_i}
+      \left[ \begin{array}{ccc}
+        p_{i1}(1-p_{i1}) & -p_{i1}p_{i2} & -p_{i1}p_{i3} \\
+        -p_{i1}p_{i2} & p_{i2}(1-p_{i2}) & -p_{i2}p_{i3} \\
+        -p_{i1}p_{i3} & -p_{i2}p_{i3} & p_{i3}(1-p_{i3})
+      \end{array} \right]
+    \end{align*}
+
+  % TODO
+  \item
 
 \end{enumerate}
 
