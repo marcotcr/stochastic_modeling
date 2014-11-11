@@ -18,6 +18,7 @@
 \newcommand{\tr}{\mathrm{tr}}
 \newcommand{\indep}{\perp\!\!\!\perp}
 \newcommand{\Indicator}[1]{\mathbbm{1}_{\{#1\}}}
+\newcommand{\Info}{\mathcal{I}}
 
 \title{\textbf{Stat 516}\\Homework 5}
 \author{Alden Timme and Marco Ribeiro}
@@ -454,6 +455,76 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
       \right)
     \end{align*}
     % TODO: continue with getting covariance from Fisher information matrix...
+    We now find the $6$ $\times$ $6$ joint asymptotic covariance matrix for
+    the MLE $\hat\theta$. We first find the Fisher information, denoting
+    $\Info_{(ij,kl)}$ the covariance between $\hat{p}_{ij}$ and $\hat{p}_{kl}$.
+    First, note that $\Info_{(ij,kl)} = 0$ for $i \ne k$, leaving a block
+    diagonal Fisher information matrix. Thus, we take as example the covariance
+    submatrix for $p_{11}$ and $p_{12}$, knowing the rest of the matrix follows
+    analogously. We use the result stated in lecture,
+    \begin{align*}
+      \Info_{km} = \sum_{i,j \in S} \frac{\pi_i(\theta)}{p_{ij}(\theta)} \frac{\partial p_{ij}(\theta)}{\partial \theta_k} \frac{\partial p_{ij}(\theta)}{\partial \theta_k}
+    \end{align*}
+    We have
+    \begin{align*}
+      \Info_{(11,11)}
+      &= \frac{\pi_1}{p_{11}} + \frac{\pi_1}{1-p_{11} - p_{12}}
+      = \frac{\pi_1(1-p_{12})}{p_{11}(1-p_{11} - p_{12})}\\
+      \Info_{(11,12)}
+      &= \frac{\pi_1}{1-p_{11} - p_{12}}\\
+      \Info_{(12,12)}
+      &= \frac{\pi_1}{p_{12}} + \frac{\pi_1}{1-p_{11} - p_{12}}
+      = \frac{\pi_1(1-p_{11})}{p_{12}(1-p_{11} - p_{12})}
+    \end{align*}
+    Since the Fisher information is block-diagonal, we can invert the
+    $2 \times 2$ submatrix formed by the parameters $p_{11}$ and $p_{12}$.
+    Denoting this submatrix $\Info_1$,
+    \begin{align*}
+      \Info_1^{-1}
+      &= \frac{1}{\det(\Info_1)}\left[ \begin{array}{cc}
+        \Info_{(12,12)} & \Info_{(11,12)} \\
+        \Info_{(11,12)} & \Info_{(11,11)}
+      \end{array} \right]
+    \end{align*}
+    where
+    \begin{align*}
+      \det(\Info_1)
+      &= \Info_{(11,11)} \Info_{(12,12)} - \Info_{(11,12)}^2\\
+      &= \frac{\pi_1(1-p_{12})}{p_{11}(1-p_{11} - p_{12})}
+      \cdot \frac{\pi_1(1-p_{11})}{p_{12}(1-p_{11} - p_{12})}
+      - \frac{\pi_1^2}{(1-p_{11} - p_{12})^2}\\
+      &= \frac{\pi_1^2}{(1-p_{11} - p_{12})^2}
+      \cdot \left[\frac{(1-p_{12})(1-p_{11})}{p_{11}p_{12}} - 1 \right]\\
+      &= \frac{\pi_1^2}{(1-p_{11} - p_{12})^2} \cdot \frac{1-p_{11} - p_{12}}{p_{11}p_{12}}\\
+      &= \frac{\pi_1^2}{p_{11}p_{12}(1-p_{11} - p_{12})}
+    \end{align*}
+    yielding
+    \begin{align*}
+      \Info_1^{-1}
+      &= \frac{1}{\det(\Info_1)}\left[ \begin{array}{cc}
+        \Info_{(12,12)} & \Info_{(11,12)} \\
+        \Info_{(11,12)} & \Info_{(11,11)}
+      \end{array} \right]\\
+      &= \frac{p_{11}p_{12}(1-p_{11} - p_{12})}{\pi_1^2}
+      \left[ \begin{array}{cc}
+        \frac{\pi_1(1-p_{11})}{p_{12}(1-p_{11} - p_{12})} & \frac{\pi_1}{1-p_{11} - p_{12}} \\
+        \frac{\pi_1}{1-p_{11} - p_{12}} & \frac{\pi_1(1-p_{12})}{p_{11}(1-p_{11} - p_{12})}
+      \end{array} \right]\\
+      &= \frac{1}{\pi_1}
+      \left[ \begin{array}{cc}
+        p_{11}(1-p_{11}) & -p_{11}p_{12} \\
+        -p_{11}p_{12} & p_{12}(1-p_{12})
+      \end{array} \right]
+    \end{align*}
+    Thus, the covariance matrix for the MLE is block diagonal, with $3$ blocks,
+    where the $i^{th}$ block is given by
+    \begin{align*}
+      \frac{1}{\pi_i}
+      \left[ \begin{array}{cc}
+        p_{i1}(1-p_{i1}) & -p_{i1}p_{i2} \\
+        -p_{i1}p_{i2} & p_{i2}(1-p_{i2})
+      \end{array} \right]
+    \end{align*}
 
 \end{enumerate}
 
