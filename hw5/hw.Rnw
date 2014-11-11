@@ -364,7 +364,7 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
     Under the Bayesian paradigm, we assume $\mathrm{Beta}(1,1)$ priors for
     $p_{12}$, $p_{21}$, and $p_{12}^{(k)}$ and $p_{21}^{(k)}$ for all years
     $k = 1,\ldots,36$. To determine the Bayes factor, we must compute
-    $\Pr(\mathbf{n}|H_0)$ and $\Pr(\mathbf{n}|H_0)$. In this case, we have
+    $\Pr(\mathbf{n}|H_0)$ and $\Pr(\mathbf{n}|H_1)$. In this case, we have
     already computed $\Pr(\mathbf{n}|H_0) \approx \Sexpr{exp(log.py.year.h0)}$,
     which was the alternative hypothesis in part (c). For
     $\Pr(\mathbf{n}|H_1)$, we have
