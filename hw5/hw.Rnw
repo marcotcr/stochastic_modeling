@@ -179,7 +179,7 @@ log.py.h1 <- lchoose(nplus[1], n[1,2]) + lchoose(nplus[2], n[2,1]) + lgamma(n[1,
       \Sexpr{n[2,1]} & \Sexpr{n[2,2]} \end{array}
     \right]
   \]
-  MLEs of $p_{12}$ $p_{21}$ are given by
+  MLEs of $p_{12}$ and $p_{21}$ are given by
     \begin{align*}
       \hat{p}_{12} &= \frac{n_{12}}{n_{1+}}
       = \frac{\Sexpr{n[1,2]}}{\Sexpr{sum(n[1,])}}
@@ -254,7 +254,7 @@ log.py.h1 <- lchoose(nplus[1], n[1,2]) + lchoose(nplus[2], n[2,1]) + lgamma(n[1,
     \mathrm{Beta}(1,1)$. Under the independence assumption, the posterior
     for $p_1$ is
     \begin{align*}
-      p_1 | n \sim \mathrm{Beta}(n_1 + 1, n_2 + 1)
+      p_1 | n \sim \mathrm{Beta}(n_{+1} + 1, n_{+2} + 1)
     \end{align*}
     while under the Markov assumption we have, as before,
     \begin{align*}
@@ -266,8 +266,8 @@ log.py.h1 <- lchoose(nplus[1], n[1,2]) + lchoose(nplus[2], n[2,1]) + lgamma(n[1,
     \begin{align*}
       \Pr(\mathbf{n}|H_0)
       &= {n_{1+} \choose n_{12}} {n_{2+} \choose n_{21}} \frac{\Gamma(2)}{\Gamma(1)\Gamma(1)}
-      \frac{\Gamma(n_1 + 1)\Gamma(n_2 + 1)}{\Gamma(n+2)}\\
-      &= {n_{1+} \choose n_{12}} {n_{2+} \choose n_{21}} \frac{\Gamma(n_1 + 1)\Gamma(n_2 + 1)}{\Gamma(n+2)}\\
+      \frac{\Gamma(n_{+1} + 1)\Gamma(n_{+2} + 1)}{\Gamma(n+2)}\\
+      &= {n_{1+} \choose n_{12}} {n_{2+} \choose n_{21}} \frac{\Gamma(n_{+1} + 1)\Gamma(n_{+2} + 1)}{\Gamma(n+2)}\\
       &\approx \Sexpr{exp(log.py.h0)}
     \end{align*}
     while under $H_1$, we have
@@ -359,8 +359,8 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
     estimate and under $H_0$ we have only $2$ parameters. With $T \sim
     \chi^2_{\Sexpr{lrt.df}}$, we have $\Pr(T > \Sexpr{lrt.year}) \approx
     \Sexpr{pval.year}$, so we would reject the null hypothesis that there
-    are common transition probabilities across years (if we assume a cut-off
-    of $0.05$).\\
+    are common transition probabilities across years (if we assume a
+    significance level of $0.05$).\\
     Under the Bayesian paradigm, we assume $\mathrm{Beta}(1,1)$ priors for
     $p_{12}$, $p_{21}$, and $p_{12}^{(k)}$ and $p_{21}^{(k)}$ for all years
     $k = 1,\ldots,36$. To determine the Bayes factor, we must compute
