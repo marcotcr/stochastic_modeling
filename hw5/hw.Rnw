@@ -168,8 +168,8 @@ bayes.ci2 <- qbeta(c(0.025, 0.975), n[2,1] + 1, n[2,2] + 1)
 p.hat.indep <- c(n1, n2) / nsum
 lrt.stat <- 2 * sum(n * log(p.hat / rbind(p.hat.indep, p.hat.indep)))
 pval <- 1 - pchisq(lrt.stat, df=1)
-log.py.h0 <- lchoose(nplus[1], n[1,2]) + lchoose(nplus[2], n[2,1]) + lgamma(n1 + 1) + lgamma(n2 + 1) - lgamma(nsum + 2)
-log.py.h1 <- lchoose(nplus[1], n[1,2]) + lchoose(nplus[2], n[2,1]) + lgamma(n[1,1] + 1) + lgamma(n[1,2] + 1) - lgamma(nplus[1] + 2) + lgamma(n[2,1] + 1) + lgamma(n[2,2] + 1) - lgamma(nplus[2] + 2)
+log.py.h0 <- lgamma(n1 + 1) + lgamma(n2 + 1) - lgamma(nsum + 2)
+log.py.h1 <- lgamma(n[1,1] + 1) + lgamma(n[1,2] + 1) - lgamma(nplus[1] + 2) + lgamma(n[2,1] + 1) + lgamma(n[2,2] + 1) - lgamma(nplus[2] + 2)
 @
 \begin{enumerate}[(a)]
   \item The transition frequencies for June across $36$ years are given by: 
@@ -261,34 +261,31 @@ log.py.h1 <- lchoose(nplus[1], n[1,2]) + lchoose(nplus[2], n[2,1]) + lgamma(n[1,
       p_{12} | n_{1\cdot} &\sim \mathrm{Beta}(n_{12} + 1, n_{11} + 1)\\
       p_{21} | n_{2\cdot} &\sim \mathrm{Beta}(n_{21} + 1, n_{22} + 1)
     \end{align*}
-    To find the Bayes factor, we must compute $\Pr(\mathbf{n}|H_0)$ and
-    $\Pr(\mathbf{n}|H_1)$. For $H_0$, we have
+    To find the Bayes factor, we must compute $\Pr(\mathbf{y}|H_0)$ and
+    $\Pr(\mathbf{y}|H_1)$, where $\mathbf{y}$ is the sequence of dry and wet
+    days. For $H_0$, we have
     \begin{align*}
-      \Pr(\mathbf{n}|H_0)
-      &= {n_{1+} \choose n_{12}} {n_{2+} \choose n_{21}} \frac{\Gamma(2)}{\Gamma(1)\Gamma(1)}
+      \Pr(\mathbf{y}|H_0)
+      &= \int_\theta p(\mathbf{y}|\theta) p(\theta|H_0) d\theta\\
+      &= \int_0^1 p^{n_{+1}}(1-p)^{n_{+2}} \left(\frac{\Gamma(2)}{\Gamma(1)\Gamma(1)}\right) dp\\
+      &= \frac{\Gamma(2)}{\Gamma(1)\Gamma(1)}
       \frac{\Gamma(n_{+1} + 1)\Gamma(n_{+2} + 1)}{\Gamma(n+2)}\\
-      &= {n_{1+} \choose n_{12}} {n_{2+} \choose n_{21}} \frac{\Gamma(n_{+1} + 1)\Gamma(n_{+2} + 1)}{\Gamma(n+2)}\\
+      &= \frac{\Gamma(n_{+1} + 1)\Gamma(n_{+2} + 1)}{\Gamma(n+2)}\\
       &\approx \Sexpr{exp(log.py.h0)}
     \end{align*}
     while under $H_1$, we have
     \begin{align*}
-      \Pr(\mathbf{n}|H_1)
-      &= \int_0^1 \int_0^1 p_{12}^{n_{12}} (1-p_{12})^{n_{11}} p_{21}^{n_{21}} (1-p_{21})^{n_{22}}
-      \left(\frac{\Gamma(2)}{\Gamma(1)\Gamma(1)}\right)^2 dp_{12} dp_{21}
-      {n_{1+} \choose n_{12}}{n_{2+} \choose n_{21}}\\
-      &= {n_{1+} \choose n_{12}}{n_{2+} \choose n_{21}}
-      \int_0^1 \int_0^1 p_{12}^{n_{12}} (1-p_{12})^{n_{11}} p_{21}^{n_{21}} (1-p_{21})^{n_{22}} dp_{12} dp_{21}\\
-      &= {n_{1+} \choose n_{12}}{n_{2+} \choose n_{21}}
-      \int_0^1 p_{12}^{n_{12}} (1-p_{12})^{n_{11}} dp_{12} \times
-      \int_0^1 p_{21}^{n_{21}} (1-p_{21})^{n_{22}} dp_{21}\\
-      &= {n_{1+} \choose n_{12}}{n_{2+} \choose n_{21}}
-      \frac{\Gamma(n_{12}+1)\Gamma(n_{11}+1)}{\Gamma(n_{1+} + 2)}
+      \Pr(\mathbf{y}|H_1)
+      &= \int_\theta p(\mathbf{y}|\theta) p(\theta|H_0) d\theta\\
+      &= \int_0^1 \int_0^1 p_{12}^{n_{12}}(1-p_{12})^{n_{11}} p_{21}^{n_{21}}(1-p_{21})^{n_{22}} \left(\frac{\Gamma(2)}{\Gamma(1)\Gamma(1)}\right)^2 dp_{12} dp_{21}\\
+      &= \int_0^1 p_{12}^{n_{12}}(1-p_{12})^{n_{11}} dp_{12} \times \int_0^1 p_{21}^{n_{21}}(1-p_{21})^{n_{22}} dp_{21}\\
+      &= \frac{\Gamma(n_{12}+1)\Gamma(n_{11}+1)}{\Gamma(n_{1+} + 2)}
       \cdot \frac{\Gamma(n_{21}+1)\Gamma(n_{22}+1)}{\Gamma(n_{2+} + 2)}\\
       &\approx \Sexpr{exp(log.py.h1)}
     \end{align*}
     The Bayes factor is then
     \begin{align*}
-      \mathrm{BF} = \frac{\Pr(\mathbf{n}|H_0)}{\Pr(\mathbf{n}|H_1)}
+      \mathrm{BF} = \frac{\Pr(\mathbf{y}|H_0)}{\Pr(\mathbf{y}|H_1)}
       \approx \Sexpr{exp(log.py.h0 - log.py.h1)}
     \end{align*}
     Using the Kass and Raftery suggestions for intervals of Bayes Factors, we
@@ -300,7 +297,7 @@ log.py.h1 <- lchoose(nplus[1], n[1,2]) + lchoose(nplus[2], n[2,1]) + lgamma(n[1,
 p12ByYear <- rep(0, 36)
 p21ByYear <- rep(0, 36)
 l1.hat <- 0
-log.py.year.h1 <- lfactorial(36)
+log.py.year.h1 <- 0
 for (i in 1:36) {
   n.tmp <- matrix(0, nrow=2, ncol=2)
   for (j in 2:30) {
@@ -314,7 +311,7 @@ for (i in 1:36) {
   tpm <- matrix(c(1-p12ByYear[i], p12ByYear[i], p21ByYear[i], 1-p21ByYear[i]),
                 nrow=2, byrow=T)
   l1.hat <- l1.hat + sum(n.tmp * log(tpm))
-  log.py.year.h1 <- log.py.year.h1 + lchoose(sum(n.tmp[1,]), n.tmp[1,2]) + lchoose(sum(n.tmp[2,]), n.tmp[2,1]) + lgamma(n.tmp[1,2] + 1) + lgamma(n.tmp[1,1] + 1) - lgamma(sum(n.tmp[1,]) + 2) + lgamma(n.tmp[2,1] + 1) + lgamma(n.tmp[2,2] + 1) - lgamma(sum(n.tmp[2,]) + 2)
+  log.py.year.h1 <- log.py.year.h1 + lgamma(n.tmp[1,2] + 1) + lgamma(n.tmp[1,1] + 1) - lgamma(sum(n.tmp[1,]) + 2) + lgamma(n.tmp[2,1] + 1) + lgamma(n.tmp[2,2] + 1) - lgamma(sum(n.tmp[2,]) + 2)
 }
 l0.hat <- sum(n * log(p.hat))
 lrt.year <- 2 * (l1.hat - l0.hat)
@@ -364,26 +361,25 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
     Under the Bayesian paradigm, we assume $\mathrm{Beta}(1,1)$ priors for
     $p_{12}$, $p_{21}$, and $p_{12}^{(k)}$ and $p_{21}^{(k)}$ for all years
     $k = 1,\ldots,36$. To determine the Bayes factor, we must compute
-    $\Pr(\mathbf{n}|H_0)$ and $\Pr(\mathbf{n}|H_1)$. In this case, we have
+    $\Pr(\mathbf{y}|H_0)$ and $\Pr(\mathbf{y}|H_1)$. In this case, we have
     already computed $\Pr(\mathbf{n}|H_0) \approx \Sexpr{exp(log.py.year.h0)}$,
     which was the alternative hypothesis in part (c). For
-    $\Pr(\mathbf{n}|H_1)$, we have
+    $\Pr(\mathbf{y}|H_1)$, we have
     \begin{align*}
-      \Pr(\mathbf{n}|H_1)
-      &= 36! \prod_{k=1}^{36} \int_0^1\int_0^1
+      \Pr(\mathbf{y}|H_1)
+      &= \int_\theta p(\mathbf{y}|\theta)p(\theta|H_1) d\theta\\
+      &= \prod_{k=1}^{36} \int_0^1\int_0^1
       {p_{12}^{(k)}}^{n_{12}^{(k)}} \left(1-p_{12}^{(k)}\right)^{n_{11}^{(k)}}
       {p_{21}^{(k)}}^{n_{21}^{(k)}} \left(1-p_{21}^{(k)}\right)^{n_{22}^{(k)}}
-      \left(\frac{\Gamma(2)}{\Gamma(1)\Gamma(1)}\right)^2 dp_{12}^{(k)} dp_{21}^{(k)}
-      {n_{1+}^{(k)} \choose n_{12}^{(k)}}{n_{2+}^{(k)} \choose n_{21}^{(k)}}\\
-      &= 36! \prod_{k=1}^{36} {n_{1+}^{(k)} \choose n_{12}^{(k)}}
-      {n_{2+}^{(k)} \choose n_{21}^{(k)}}
+      \left(\frac{\Gamma(2)}{\Gamma(1)\Gamma(1)}\right)^2 dp_{12}^{(k)} dp_{21}^{(k)}\\
+      &= \prod_{k=1}^{36}
       \frac{\Gamma(n_{12}^{(k)}+1)\Gamma(n_{11}^{(k)}+1)}{\Gamma(n_{1+}^{(k)} + 2)}
       \cdot \frac{\Gamma(n_{21}^{(k)}+1)\Gamma(n_{22}^{(k)}+1)}{\Gamma(n_{2+}^{(k)} + 2)}\\
       &\approx \Sexpr{exp(log.py.year.h1)}
     \end{align*}
     yielding a Bayes factor of
     \begin{align*}
-      \mathrm{BF} &= \frac{\Pr(\mathbf{n}|H_0)}{\Pr(\mathbf{n}|H_1)}
+      \mathrm{BF} &= \frac{\Pr(\mathbf{y}|H_0)}{\Pr(\mathbf{y}|H_1)}
       \approx \Sexpr{exp(log.py.year.h0 - log.py.year.h1)}
     \end{align*}
     which, by the suggested intervals of Kass and Raftery, does \textit{not}
