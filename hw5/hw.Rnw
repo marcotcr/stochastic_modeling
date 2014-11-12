@@ -132,6 +132,7 @@ hist(samples_y, main="10000 Samples from Posterior")
 \end{enumerate}
 
 \subsection*{2}
+\texttt{R} code for this problem can be found in the appendix.
 <<snoqualmie, eval=T, echo=F>>=
 y <- scan("snoqualmie.txt", quiet=T)
 # first year is a leap year, but already accounting for that in starting
@@ -362,7 +363,7 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
     $p_{12}$, $p_{21}$, and $p_{12}^{(k)}$ and $p_{21}^{(k)}$ for all years
     $k = 1,\ldots,36$. To determine the Bayes factor, we must compute
     $\Pr(\mathbf{y}|H_0)$ and $\Pr(\mathbf{y}|H_1)$. In this case, we have
-    already computed $\Pr(\mathbf{n}|H_0) \approx \Sexpr{exp(log.py.year.h0)}$,
+    already computed $\Pr(\mathbf{y}|H_0) \approx \Sexpr{exp(log.py.year.h0)}$,
     which was the alternative hypothesis in part (c). For
     $\Pr(\mathbf{y}|H_1)$, we have
     \begin{align*}
@@ -452,7 +453,8 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
     \end{align*}
     We now find the $6 \times 6$ joint asymptotic covariance matrix for
     the MLE $\hat\theta$. We first find the Fisher information, denoting
-    $\Info_{(ij,kl)}^{-1}$ the asymptotic covariance between $\hat{p}_{ij}$ and $\hat{p}_{kl}$.
+    $\frac{1}{n}\Info_{(ij,kl)}^{-1}$ the asymptotic covariance between
+    $\hat{p}_{ij}$ and $\hat{p}_{kl}$.
     First, note that $\Info_{(ij,kl)} = 0$ for $i \ne k$, leaving a block
     diagonal Fisher information matrix. Thus, we take as example the covariance
     submatrix for $p_{11}$ and $p_{12}$, knowing the rest of the matrix follows
@@ -514,7 +516,7 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
     Thus, the covariance matrix for the MLE is block diagonal, with $3$ blocks,
     where the $i^{th}$ block is given by
     \begin{align*}
-      \frac{1}{\pi_i}
+      \frac{1}{n\pi_i}
       \left[ \begin{array}{cc}
         p_{i1}(1-p_{i1}) & -p_{i1}p_{i2} \\
         -p_{i1}p_{i2} & p_{i2}(1-p_{i2})
@@ -532,26 +534,26 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
       \Var(\hat{p}_{i3})
       &= \Var(1 - \hat{p}_{i1} - \hat{p}_{i2})\\
       &= \Var(\hat{p}_{i1}) + \Var(\hat{p}_{i2}) + 2\Cov(\hat{p}_{i1},\hat{p}_{i2})\\
-      &= \frac{1}{\pi_i}\left(p_{i1}(1-p_{i1}) + p_{i2}(1-p_{i2}) - 2p_{i1}p_{i2}\right)\\
-      &= \frac{1}{\pi_i}\left(p_{i1}-p_{i1}^2 + p_{i2}-p_{i2}^2 - 2p_{i1}p_{i2}\right)\\
-      &= \frac{1}{\pi_i}\left(p_{i1} + p_{i2} - (p_{i1} + p_{i2})^2\right)\\
-      &= \frac{1}{\pi_i}\left((1 - p_{i1} - p_{i2})(p_{i1} + p_{i2})\right)\\
-      &= \frac{1}{\pi_i}\left(p_{i3}(1-p_{i3})\right)\\
+      &= \frac{1}{n\pi_i}\left(p_{i1}(1-p_{i1}) + p_{i2}(1-p_{i2}) - 2p_{i1}p_{i2}\right)\\
+      &= \frac{1}{n\pi_i}\left(p_{i1}-p_{i1}^2 + p_{i2}-p_{i2}^2 - 2p_{i1}p_{i2}\right)\\
+      &= \frac{1}{n\pi_i}\left(p_{i1} + p_{i2} - (p_{i1} + p_{i2})^2\right)\\
+      &= \frac{1}{n\pi_i}\left((1 - p_{i1} - p_{i2})(p_{i1} + p_{i2})\right)\\
+      &= \frac{1}{n\pi_i}\left(p_{i3}(1-p_{i3})\right)\\
       \Cov(\hat{p}_{i1}, \hat{p}_{i3})
       &= \Cov(\hat{p}_{i1}, 1 - \hat{p}_{i1} - \hat{p}_{i2})\\
       &= -\Var(\hat{p}_{i1}) - \Cov(\hat{p}_{i1}, \hat{p}_{i2})\\
-      &= \frac{1}{\pi_i}\left(-p_{i1}(1-p_{i1}) + p_{i1}p_{i2}\right)\\
-      &= \frac{1}{\pi_i}\left(-p_{i1}(1-p_{i1} - p_{i2})\right)\\
-      &= \frac{1}{\pi_i}\left(-p_{i1} p_{i3}\right)\\
+      &= \frac{1}{n\pi_i}\left(-p_{i1}(1-p_{i1}) + p_{i1}p_{i2}\right)\\
+      &= \frac{1}{n\pi_i}\left(-p_{i1}(1-p_{i1} - p_{i2})\right)\\
+      &= \frac{1}{n\pi_i}\left(-p_{i1} p_{i3}\right)\\
       \Cov(\hat{p}_{i2}, \hat{p}_{i3})
-      &= \frac{1}{\pi_i}\left(-p_{i2} p_{i3}\right)
+      &= \frac{1}{n\pi_i}\left(-p_{i2} p_{i3}\right)
     \end{align*}
     where the last term is arrived at by analogous reasoning to
     $\Cov(\hat{p}_{i1}, \hat{p}_{i3})$.\\
     Thus, we have that the joint asymptotic covariance matrix is block
     diagonal, with $3$ blocks, where the $i^{th}$ block is given by
     \begin{align*}
-      \frac{1}{\pi_i}
+      \frac{1}{n\pi_i}
       \left[ \begin{array}{ccc}
         p_{i1}(1-p_{i1}) & -p_{i1}p_{i2} & -p_{i1}p_{i3} \\
         -p_{i1}p_{i2} & p_{i2}(1-p_{i2}) & -p_{i2}p_{i3} \\
@@ -579,5 +581,15 @@ ggplot(plot.df, aes(x=year, y=logit, group=prob)) +
   have lower frequencies.
 
 \end{enumerate}
+
+\newpage
+\appendix
+\subsection*{2(a-c)}
+<<snoqualmie, eval=F, echo=T>>=
+@
+\subsection*{2(d)}
+<<snoqualmie-by-year, eval=F, echo=T>>=
+@
+
 
 \end{document}
