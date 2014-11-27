@@ -70,22 +70,31 @@ And thus:
 %TODO: This notation is a bit confusing. I don't know how to make it better
 %right now though.
 \begin{align*}
-\E\left[a_i|Y, \hat\sigma_1^2, \hat\sigma_2^2, \hat\rho\right] &= \begin{cases}
+\E\left[a_i|Y, \tilde\sigma_1^2, \tilde\sigma_2^2, \tilde\rho\right] &= \begin{cases}
   x_i  & \text{if } x_i \ne NA \\
-  \hat\rho\hat\sigma_1y_i/\hat\sigma_2 & \text{if } x_i  = NA
+  \tilde\rho\tilde\sigma_1y_i/\tilde\sigma_2 & \text{if } x_i  = NA
   \end{cases} \\
-\E\left[b_i|Y, \hat\sigma_1^2, \hat\sigma_2^2, \hat\rho\right] &= \begin{cases}
+\E\left[b_i|Y, \tilde\sigma_1^2, \tilde\sigma_2^2, \tilde\rho\right] &= \begin{cases}
   y_i  & \text{if } y_i \ne NA \\
-  \hat\rho\hat\sigma_2x_i/\hat\sigma_1 & \text{if } y_i  = NA
+  \tilde\rho\tilde\sigma_2x_i/\tilde\sigma_1 & \text{if } y_i  = NA
   \end{cases} \\
-\E\left[a_i^2|Y, \hat\sigma_1^2, \hat\sigma_2^2, \hat\rho\right] &= \begin{cases}
+\E\left[a_i^2|Y, \tilde\sigma_1^2, \tilde\sigma_2^2, \tilde\rho\right] &= \begin{cases}
   x_i^2  & \text{if } x_i \ne NA \\
-  \Var(a_i | b_i) + \E[a_i | b_i]^2 = (1 - \hat\rho^2)\hat\sigma_1^2 + \frac{\hat\sigma_1^2}{\hat\sigma_2^2} \hat\rho^2 y_i^2 & \text{if } x_i  = NA
+  \Var(a_i | b_i) + \E[a_i | b_i]^2 = (1 - \tilde\rho^2)\tilde\sigma_1^2 + \frac{\tilde\sigma_1^2}{\tilde\sigma_2^2} \tilde\rho^2 y_i^2 & \text{if } x_i  = NA
   \end{cases} \\
-\E\left[b_i^2|Y, \hat\sigma_1^2, \hat\sigma_2^2, \hat\rho\right] &= \begin{cases}
+\E\left[b_i^2|Y, \tilde\sigma_1^2, \tilde\sigma_2^2, \tilde\rho\right] &= \begin{cases}
   y_i^2  & \text{if } y_i \ne NA \\
-  \Var(b_i | a_i) + \E[b_i | a_i]^2 = (1 - \hat\rho^2)\hat\sigma_2^2 + \frac{\hat\sigma_2^2}{\hat\sigma_1^2}\hat\rho^2 x_i^2 & \text{if } y_i  = NA
+  \Var(b_i | a_i) + \E[b_i | a_i]^2 = (1 - \tilde\rho^2)\tilde\sigma_2^2 + \frac{\tilde\sigma_2^2}{\tilde\sigma_1^2}\tilde\rho^2 x_i^2 & \text{if } y_i  = NA
   \end{cases}
+\end{align*}
+Maximizing $\E[\ell|\cdot]$, we first parameterize in terms of
+$\sigma_1^2, \sigma_2^2, \sigma_{12}$, in which case we know the maximizers
+are
+\begin{align*}
+  \hat\sigma_1^2 = \frac{1}{n} \sum_{i=1}^n a_i^2,\;\;
+  \hat\sigma_2^2 = \frac{1}{n} \sum_{i=1}^n b_i^2,\;\;
+  \hat\sigma_{12} = \frac{1}{n} \sum_{i=1}^n a_ib_i,\;\;
+  \hat\rho = \frac{\hat\sigma_{12}}{\hat\sigma_1\hat\sigma_2}
 \end{align*}
 
 
