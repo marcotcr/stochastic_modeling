@@ -247,10 +247,6 @@ ForwardBackwardNaive <- function(x, emissions, transitions, initials) {
       backward[t,i] <- sum(transitions[i,] * emissions[,x[t+1]] * backward[t+1,])
     }
   }
-  backward0 <- rep(0, numStates)
-  for (i in 1:numStates) {
-    backward0[i] <- sum(initials * emissions[,x[1]] * backward[1,])
-  }
   forward <- matrix(0, nrow=n, ncol=numStates)
   forward[1,] <- emissions[,x[1]] * initials
   for (t in 1:(n-1)) {
@@ -294,7 +290,49 @@ breakdowns <- sapply(1:10, GetBreakdown)
   into numerical issues at sequence lengths of around $420$ to $440$.
 >>>>>>> 7c29be1babb19f542bc009bd0204a2ce087e9cfb
 
-\item
+
+<<forward-backward-log, eval=T, echo=F, cache=T>>=
+LogSum <- function(logA, logB) {
+  if (logB > logA) {
+    tmp <- logA
+    logA <- logB
+    logB <- logA
+  }
+  logA + log(1 + exp(logB - logA))
+}
+ForwardBackwardLog <- function(x, emissions, transitions, initials) {
+  numStates <- nrow(emissions)
+  n <- length(x)
+  logBackward <- matrix(0, nrow=n, ncol=numStates)
+  logBackward[n,] <- 0
+  for (t in (n-1):1) {
+    for (i in 1:numStates) {
+      logBackward[t,i] <- log(transitions[i,1]) + log(emissions[1,x[t+1]]) + logBackward[t+1,1]
+      for (j in 2:numStates) {
+        logB <- log(transitions[i,j]) + log(emissions[j,x[t+1]]) + logBackward[t+1,j]
+        logBackward[t,i] <- LogSum(logBackward[t,i], logB)
+      }
+    }
+  }
+  logForward <- matrix(0, nrow=n, ncol=numStates)
+  logForward[1,] <- log(emissions[,x[1]]) + log(initials)
+  for (t in 1:(n-1)) {
+    for (i in 1:numStates) {
+      logForward[t+1,i] <- logForward[t,1] + log(transitions[1,i])
+      for (j in 2:numStates) {
+        logF <- logForward[t,j] + log(transitions[j,i])
+        logForward[t+1,i] <- LogSum(logForward[t+1,i], logF)
+      }
+    }
+    logForward[t+1,i] <- logForward[t+1,i] + log(emissions[i,x[t+1]])
+  }
+  list(logBackward=logBackward, logForward=logForward)
+}
+@
+\item Yes, when keeping everything on the log-scale and using the $\log(a+b)$
+  formula given, we are able to succesfully compute the ($\log$) forward and
+  backward probabilities without running into numerical issues.
+
 
 \end{enumerate}
 
