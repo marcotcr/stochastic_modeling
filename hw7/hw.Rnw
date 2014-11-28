@@ -32,7 +32,14 @@ library(ggplot2)
 \maketitle
 \subsection*{1}
 To make notation easier, we rename each sample of the observed data to $Y_i =
-(x_i, y_i)$. The density then becomes:
+(x_i, y_i)$. We also note that:
+\begin{align*}
+\Sigma = \left[ \begin{array}{cc}
+\sigma_1^2 & \rho\sigma_1\sigma_2\\
+\rho\sigma_1\sigma_2 & \sigma_2^2 
+\end{array}\right]
+\end{align*}
+The density then becomes:
 \begin{align*}
   f_{\sigma_1^2,\sigma_2^2,\rho}(x_i, y_i) =
   \frac{1}{2\pi\sigma_1\sigma_2\sqrt{1 - \rho^2}}exp\left\{-\frac{1}{2(1 -
@@ -41,34 +48,32 @@ To make notation easier, we rename each sample of the observed data to $Y_i =
 \end{align*}
 
 \begin{enumerate}[(a)]
-\item If there was not missing data, the likelihood and log likelihood would be
+\item If there was not missing data,  log likelihood would be
 as follows, assuming we had full observed data $X$ s.t. $X_i = (a_i,b_i)$.
 \begin{align*}
-  L(\sigma_1^2,\sigma_2^2,\rho) &= \prod_{i=1}^{n}{f_{\sigma_1^2,\sigma_2^2,\rho}(x_i, y_i)} \\
-  l(\sigma_1^2,\sigma_2^2,\rho) &= \sum_{i=1}^{n}{-log(2\pi) -log(\sigma_1) -
-  log(\sigma_2) - \frac{1}{2}log(1-\rho^2) - \frac{1}{2(1-\rho^2)}
-  \left(\frac{a_i^2}{\sigma^2_1} + \frac{b_i^2}{\sigma_2^2} - \frac{2\rho
-  a_ib_i}{\sigma_1\sigma_2} \right)}
-\end{align*}
-In the E step of EM, we would have to evaluate $E[l(\sigma_1^2,\sigma_2^2,\rho)
+  l(\Sigma) &= c + -\frac{n}{2}ln(|\Sigma|) - \frac{1}{2}\sum_{i=1}^{n}{(X_i)^T\Sigma^{-1}X_i}
+  \end{align*}
+%\begin{align*}
+%  L(\sigma_1^2,\sigma_2^2,\rho) &= \prod_{i=1}^{n}{f_{\sigma_1^2,\sigma_2^2,\rho}(x_i, y_i)} \\
+%  l(\sigma_1^2,\sigma_2^2,\rho) &= \sum_{i=1}^{n}{-log(2\pi) -log(\sigma_1) -
+%  log(\sigma_2) - \frac{1}{2}log(1-\rho^2) - \frac{1}{2(1-\rho^2)}
+%  \left(\frac{a_i^2}{\sigma^2_1} + \frac{b_i^2}{\sigma_2^2} - \frac{2\rho
+%  a_ib_i}{\sigma_1\sigma_2} \right)}
+%\end{align*}
+In the E step of EM, we would have to evaluate $E[l(\Sigma)
 | Y, (\sigma_1^2)^{(n)}, (\sigma_2^2)^{(n)}, \rho^{(n)}]$, where
 $((\sigma_1^2)^{(n)}, (\sigma_2^2)^{(n)}, \rho^{(n)})$ are current guesses of
 the parameters, which we abbreviate
 to $E[l | .]$.
 \begin{align*}
-  E[l|.] &= \sum_{i=1}^{n}{-log(2\pi) -log(\sigma_1) -
-  log(\sigma_2) - \frac{1}{2}log(1-\rho^2) - \frac{1}{2(1-\rho^2)}
-  \left(\frac{E[a_i^2|.]}{\sigma^2_1} + \frac{E[b_i^2|.]}{\sigma_2^2} - \frac{2\rho
-  E[a_i|.]E[b_i|.]}{\sigma_1\sigma_2} \right)}
+  E[l|.] &= c + -\frac{n}{2}ln(|\Sigma|) - \frac{1}{2}\sum_{i=1}^{n}{(E[X_i|.])^T\Sigma^{-1}E[X_i|.]}
 \end{align*}
 We know that in the bivariate normal with zero means,
 \begin{align*}
 a_i|b_i \sim\ \mathcal{N}\left(\frac{\sigma_1}{\sigma_2}\rho b_i,\, (1-\rho^2)\sigma_1^2\right) \\
 b_i|a_i \sim\ \mathcal{N}\left(\frac{\sigma_2}{\sigma_1}\rho a_i,\, (1-\rho^2)\sigma_2^2\right)
 \end{align*}
-And thus:
-%TODO: This notation is a bit confusing. I don't know how to make it better
-%right now though.
+And thus, for $X_i = (a_i,b_i)$ and $Y_i = (x_i, y_i)$:
 \begin{align*}
 E[a_i|Y, (\sigma_1^2)^{(n)}, (\sigma_2^2)^{(n)}, \rho^{(n)}] = \begin{cases}
   x_i  & \text{if } x_i \ne NA \\
@@ -87,6 +92,20 @@ E[b_i^2|Y, (\sigma_1^2)^{(n)}, (\sigma_2^2)^{(n)}, \rho^{(n)}] = \begin{cases}
   Var(b_i | a_i) = (1 - (\rho^{(n)})^2)(\sigma_2^{(n)})^2 & \text{if } y_i  = NA
   \end{cases} \\
 \end{align*}
+
+For the M step, we would optimize $E[l|.]$. We know that the MLE for $\Sigma$,
+which optimizes the log likelihood, is:
+\begin{align*}
+\hat{\Sigma} = \frac{1}{n}\sum_{i=1}^{n}{E[X_i]E[X_i^T]}
+\end{align*}
+And thus:
+\begin{align*}
+\hat{\sigma_1^2} &= \frac{1}{n}\sum_{i=1}^{n}{E[a_i^2|.]}\\
+\hat{\sigma_2^2} &= \frac{1}{n}\sum_{i=1}^{n}{E[b_i^2|.]}\\
+\hat{\rho} &=
+\frac{1}{n\sqrt{\hat{\sigma_1^2}{\hat{\sigma_2^2}}}}\sum_{i=1}^{n}{E[a_i|.]E[b_i|.]}
+\end{align*}
+
 
 
 
