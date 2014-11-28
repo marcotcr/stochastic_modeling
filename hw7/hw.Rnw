@@ -25,8 +25,9 @@
 \date{Due Date: Thursday, December 4}
 
 \begin{document}
-<<libaries, eval=T, echo=F>>=
+<<libaries, eval=T, echo=F, message=F, warning=F>>=
 library(ggplot2)
+library(xtable)
 @
 
 \maketitle
@@ -97,7 +98,128 @@ are
   \hat\rho = \frac{\hat\sigma_{12}}{\hat\sigma_1\hat\sigma_2}
 \end{align*}
 
+<<normal-em, eval=T, echo=F>>=
+missdata <- read.table("hw7-missdata-centered.txt", header=T)
+x1 <- missdata$X1
+x2 <- missdata$X2
+n <- nrow(missdata)
+BivariateNormalIncompleteLogLikelihood <- function(sigma.1.sq, sigma.2.sq, rho) {
+  ll <- 0
+  for (i in 1:n) {
+    ll <- ll - log(2 * pi)
+    if (is.na(x1[i])) {           # just x2
+      ll <- ll - log(sigma.2.sq)/2 - x2[i]^2/(2 * sigma.2.sq)
+    } else if (is.na(x2[i])) {    # just x1
+      ll <- ll - log(sigma.1.sq)/2 - x1[i]^2/(2 * sigma.1.sq)
+    } else {                      # both
+      ll <- ll - log(sigma.1.sq)/2 - log(sigma.2.sq)/2 - log(1-rho^2)/2
+      ll <- ll - (x1[i]^2/sigma.1.sq + x2[i]^2/sigma.2.sq - 2 * rho * x1[i] * x2[i] / sqrt(sigma.1.sq * sigma.2.sq))/(2 * (1-rho^2))
+    }
+  }
+  ll
+}
+BivariateNormalEM <- function(sigma.1.sq, sigma.2.sq, rho) {
+  ll <- BivariateNormalIncompleteLogLikelihood(sigma.1.sq, sigma.2.sq, rho)
+  while (T) {
+    sigma.hat.1.sq <- 0
+    sigma.hat.2.sq <- 0
+    sigma.hat.12 <- 0
+    for (i in 1:n) {
+      if (is.na(x1[i])) {
+        ai <- rho * sqrt(sigma.1.sq) * x2[i] / sigma.2.sq
+        ai.sq <- sigma.1.sq * (1 - rho^2 + rho^2 * x2[i]^2 / sigma.2.sq)
+      } else {
+        ai <- x1[i]
+        ai.sq <- x1[i]^2
+      }
+      if (is.na(x2[i])) {
+        bi <- rho * sqrt(sigma.2.sq) * x1[i] / sigma.1.sq
+        bi.sq <- sigma.2.sq * (1 - rho^2 + rho^2 * x1[i]^2 / sigma.1.sq)
+      } else {
+        bi <- x2[i]
+        bi.sq <- x2[i]^2
+      }
+      sigma.hat.1.sq <- sigma.hat.1.sq + ai.sq
+      sigma.hat.2.sq <- sigma.hat.2.sq + bi.sq
+      sigma.hat.12 <- sigma.hat.12 + ai * bi
+    }
+    sigma.hat.1.sq <- sigma.hat.1.sq / n
+    sigma.hat.2.sq <- sigma.hat.2.sq / n
+    sigma.hat.12 <- sigma.hat.12 / n
+    rho.hat <- sigma.hat.12 / (sqrt(sigma.hat.1.sq * sigma.hat.2.sq))
 
+    sigma.1.sq <- sigma.hat.1.sq
+    sigma.2.sq <- sigma.hat.2.sq
+    rho <- rho.hat
+    new.ll <- BivariateNormalIncompleteLogLikelihood(sigma.1.sq, sigma.2.sq, rho)
+    if ((new.ll - ll) < 1e-12) break
+    ll <- new.ll
+  }
+  return(list(sigma.1.sq=sigma.1.sq, sigma.2.sq=sigma.2.sq, rho=rho, loglik=ll))
+}
+em.results <- BivariateNormalEM(1, 1, 0)
+@
+\item Using the data from \texttt{hw7-missdata-centered.txt}, and starting with
+  $\sigma_1^2 = \sigma_2^2 = 1$ and $\rho=0$, we arrive at the following
+  estimates
+  \begin{table}[H]
+    \centering
+    \begin{tabular}{c|c|c}
+      $\hat\rho$ & $\hat\sigma_1^2$ & $\hat\sigma_2^2$\\\hline
+      \Sexpr{em.results$rho} &
+      \Sexpr{em.results$sigma.1.sq} &
+      \Sexpr{em.results$sigma.2.sq}
+    \end{tabular}
+  \end{table}
+
+<<em-random-start, eval=T, echo=F, cache=T>>=
+rhos <- c(-0.5, 0, 0.5)
+sigma.1.sqs <- c(0.5, 1, 2, 4)
+sigma.2.sqs <- c(0.5, 1, 2, 4)
+N <- length(rhos) * length(sigma.1.sqs) * length(sigma.2.sqs)
+results <- data.frame(rho.start=rep(0, N),
+                      sigma.1.start=rep(0, N),
+                      sigma.2.start=rep(0, N),
+                      rho=rep(0, N),
+                      sigma.1.sq=rep(0, N),
+                      sigma.2.sq=rep(0, N),
+                      loglik=rep(0, N))
+idx <- 1
+for (rho in rhos) {
+  for (sigma.1.sq in sigma.1.sqs) {
+    for (sigma.2.sq in sigma.2.sqs) {
+      results$rho.start[idx] <- rho
+      results$sigma.1.start[idx] <- sigma.1.sq
+      results$sigma.2.start[idx] <- sigma.2.sq
+      res <- BivariateNormalEM(sigma.1.sq, sigma.2.sq, rho)
+      results$sigma.1.sq[idx] <- res$sigma.1.sq
+      results$sigma.2.sq[idx] <- res$sigma.2.sq
+      results$rho[idx] <- res$rho
+      results$loglik[idx] <- res$loglik
+      idx <- idx + 1
+    }
+  }
+}
+@
+\item Starting at multiple starting values, we get the results shown in the
+  following table. As we can see, we converge to different estimates of
+  $\hat\rho, \hat\sigma_1^2, \hat\sigma_2^2$ depending on where we initialize.
+  This shows that there are likely multiple local maxima found by the EM
+  algorithm. By also outputting the loglikelihood of the incomplete data
+  (including only the marginal probabilities for values that have \texttt{NA}),
+  we can compare the results. Although the log likelihoods are generally very
+  close to each other, we find a maximum log likelihood of $-277.60$ with
+  $\hat\rho=0.25$, $\hat\sigma_1^2=2.41$, and $\hat\sigma_2^2=1.05$.
+  Furthermore, we see that the estimates of $\sigma_1^2$ and $\sigma_2^2$ are
+  generally stable around $2.41$ and $1.04$, respectively, while the estimates
+  of $\rho$ can vary between $0.18$ and $0.25$.
+<<em-multistart-table, eval=T, echo=F, results='asis'>>=
+colnames(results) <- c("$\\rho^{(0)}$", "${\\sigma_1^2}^{(0)}$",
+                       "${\\sigma_2^2}^{(0)}$", "$\\hat\\rho$",
+                       "$\\hat\\sigma_1^2$", "$\\hat\\sigma_2^2$",
+                       "$\\ell(x)$")
+print(xtable(results), sanitize.colnames.function = function(x){x}, include.rownames=F)
+@
 
 \end{enumerate}
 
