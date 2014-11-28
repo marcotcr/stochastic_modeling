@@ -25,8 +25,9 @@
 \date{Due Date: Thursday, December 4}
 
 \begin{document}
-<<libaries, eval=T, echo=F>>=
+<<libaries, eval=T, echo=F, message=F, warning=F>>=
 library(ggplot2)
+library(xtable)
 @
 
 \maketitle
@@ -61,8 +62,8 @@ as follows, assuming we had full observed data $X$ s.t. $X_i = (a_i,b_i)$.
 %  a_ib_i}{\sigma_1\sigma_2} \right)}
 %\end{align*}
 In the E step of EM, we would have to evaluate $E[l(\Sigma)
-| Y, (\sigma_1^2)^{(n)}, (\sigma_2^2)^{(n)}, \rho^{(n)}]$, where
-$((\sigma_1^2)^{(n)}, (\sigma_2^2)^{(n)}, \rho^{(n)})$ are current guesses of
+| Y, \tilde\sigma_1^2, \tilde\sigma_2^2, \tilde\rho]$, where
+$(\tilde\sigma_1^2, \tilde\sigma_2^2, \tilde\rho)$ are current guesses of
 the parameters, which we abbreviate
 to $E[l | .]$.
 \begin{align*}
@@ -75,22 +76,22 @@ b_i|a_i \sim\ \mathcal{N}\left(\frac{\sigma_2}{\sigma_1}\rho a_i,\, (1-\rho^2)\s
 \end{align*}
 And thus, for $X_i = (a_i,b_i)$ and $Y_i = (x_i, y_i)$:
 \begin{align*}
-E[a_i|Y, (\sigma_1^2)^{(n)}, (\sigma_2^2)^{(n)}, \rho^{(n)}] = \begin{cases}
+\E\left[a_i|Y, \tilde\sigma_1^2, \tilde\sigma_2^2, \tilde\rho\right] &= \begin{cases}
   x_i  & \text{if } x_i \ne NA \\
-  \rho^{(n)}\sigma_1^{(n)}y_i/\sigma_2^{(n)} & \text{if } x_i  = NA
+  \tilde\rho\tilde\sigma_1y_i/\tilde\sigma_2 & \text{if } x_i  = NA
   \end{cases} \\
-E[b_i|Y, (\sigma_1^2)^{(n)}, (\sigma_2^2)^{(n)}, \rho^{(n)}] = \begin{cases}
+\E\left[b_i|Y, \tilde\sigma_1^2, \tilde\sigma_2^2, \tilde\rho\right] &= \begin{cases}
   y_i  & \text{if } y_i \ne NA \\
-  \rho^{(n)}\sigma_2^{(n)}x_i/\sigma_1^{(n)} & \text{if } y_i  = NA
+  \tilde\rho\tilde\sigma_2x_i/\tilde\sigma_1 & \text{if } y_i  = NA
   \end{cases} \\
-E[a_i^2|Y, (\sigma_1^2)^{(n)}, (\sigma_2^2)^{(n)}, \rho^{(n)}] = \begin{cases}
+\E\left[a_i^2|Y, \tilde\sigma_1^2, \tilde\sigma_2^2, \tilde\rho\right] &= \begin{cases}
   x_i^2  & \text{if } x_i \ne NA \\
-  Var(a_i | b_i) = (1 - (\rho^{(n)})^2)(\sigma_1^2)^{(n)} & \text{if } x_i  = NA
+  \Var(a_i | b_i) + \E[a_i | b_i]^2 = (1 - \tilde\rho^2)\tilde\sigma_1^2 + \frac{\tilde\sigma_1^2}{\tilde\sigma_2^2} \tilde\rho^2 y_i^2 & \text{if } x_i  = NA
   \end{cases} \\
-E[b_i^2|Y, (\sigma_1^2)^{(n)}, (\sigma_2^2)^{(n)}, \rho^{(n)}] = \begin{cases}
+\E\left[b_i^2|Y, \tilde\sigma_1^2, \tilde\sigma_2^2, \tilde\rho\right] &= \begin{cases}
   y_i^2  & \text{if } y_i \ne NA \\
-  Var(b_i | a_i) = (1 - (\rho^{(n)})^2)(\sigma_2^{(n)})^2 & \text{if } y_i  = NA
-  \end{cases} \\
+  \Var(b_i | a_i) + \E[b_i | a_i]^2 = (1 - \tilde\rho^2)\tilde\sigma_2^2 + \frac{\tilde\sigma_2^2}{\tilde\sigma_1^2}\tilde\rho^2 x_i^2 & \text{if } y_i  = NA
+  \end{cases}
 \end{align*}
 
 For the M step, we would optimize $E[l|.]$. We know that the MLE for $\Sigma$,
@@ -106,8 +107,194 @@ And thus:
 \frac{1}{n\sqrt{\hat{\sigma_1^2}{\hat{\sigma_2^2}}}}\sum_{i=1}^{n}{E[a_i|.]E[b_i|.]}
 \end{align*}
 
+<<normal-em, eval=T, echo=F>>=
+missdata <- read.table("hw7-missdata-centered.txt", header=T)
+x1 <- missdata$X1
+x2 <- missdata$X2
+n <- nrow(missdata)
+BivariateNormalIncompleteLogLikelihood <- function(sigma.1.sq, sigma.2.sq, rho) {
+  ll <- 0
+  for (i in 1:n) {
+    ll <- ll - log(2 * pi)
+    if (is.na(x1[i])) {           # just x2
+      ll <- ll - log(sigma.2.sq)/2 - x2[i]^2/(2 * sigma.2.sq)
+    } else if (is.na(x2[i])) {    # just x1
+      ll <- ll - log(sigma.1.sq)/2 - x1[i]^2/(2 * sigma.1.sq)
+    } else {                      # both
+      ll <- ll - log(sigma.1.sq)/2 - log(sigma.2.sq)/2 - log(1-rho^2)/2
+      ll <- ll - (x1[i]^2/sigma.1.sq + x2[i]^2/sigma.2.sq - 2 * rho * x1[i] * x2[i] / sqrt(sigma.1.sq * sigma.2.sq))/(2 * (1-rho^2))
+    }
+  }
+  ll
+}
+BivariateNormalEM <- function(sigma.1.sq, sigma.2.sq, rho) {
+  ll <- BivariateNormalIncompleteLogLikelihood(sigma.1.sq, sigma.2.sq, rho)
+  while (T) {
+    sigma.hat.1.sq <- 0
+    sigma.hat.2.sq <- 0
+    sigma.hat.12 <- 0
+    for (i in 1:n) {
+      if (is.na(x1[i])) {
+        ai <- rho * sqrt(sigma.1.sq) * x2[i] / sigma.2.sq
+        ai.sq <- sigma.1.sq * (1 - rho^2 + rho^2 * x2[i]^2 / sigma.2.sq)
+      } else {
+        ai <- x1[i]
+        ai.sq <- x1[i]^2
+      }
+      if (is.na(x2[i])) {
+        bi <- rho * sqrt(sigma.2.sq) * x1[i] / sigma.1.sq
+        bi.sq <- sigma.2.sq * (1 - rho^2 + rho^2 * x1[i]^2 / sigma.1.sq)
+      } else {
+        bi <- x2[i]
+        bi.sq <- x2[i]^2
+      }
+      sigma.hat.1.sq <- sigma.hat.1.sq + ai.sq
+      sigma.hat.2.sq <- sigma.hat.2.sq + bi.sq
+      sigma.hat.12 <- sigma.hat.12 + ai * bi
+    }
+    sigma.hat.1.sq <- sigma.hat.1.sq / n
+    sigma.hat.2.sq <- sigma.hat.2.sq / n
+    sigma.hat.12 <- sigma.hat.12 / n
+    rho.hat <- sigma.hat.12 / (sqrt(sigma.hat.1.sq * sigma.hat.2.sq))
+
+    sigma.1.sq <- sigma.hat.1.sq
+    sigma.2.sq <- sigma.hat.2.sq
+    rho <- rho.hat
+    new.ll <- BivariateNormalIncompleteLogLikelihood(sigma.1.sq, sigma.2.sq, rho)
+    if ((new.ll - ll) < 1e-12) break
+    ll <- new.ll
+  }
+  return(list(sigma.1.sq=sigma.1.sq, sigma.2.sq=sigma.2.sq, rho=rho, loglik=ll))
+}
+em.results <- BivariateNormalEM(1, 1, 0)
+@
+\item Using the data from \texttt{hw7-missdata-centered.txt}, and starting with
+  $\sigma_1^2 = \sigma_2^2 = 1$ and $\rho=0$, we arrive at the following
+  estimates
+  \begin{table}[H]
+    \centering
+    \begin{tabular}{c|c|c}
+      $\hat\rho$ & $\hat\sigma_1^2$ & $\hat\sigma_2^2$\\\hline
+      \Sexpr{em.results$rho} &
+      \Sexpr{em.results$sigma.1.sq} &
+      \Sexpr{em.results$sigma.2.sq}
+    \end{tabular}
+  \end{table}
+
+<<em-random-start, eval=T, echo=F, cache=T>>=
+rhos <- c(-0.5, 0, 0.5)
+sigma.1.sqs <- c(0.5, 1, 2, 4)
+sigma.2.sqs <- c(0.5, 1, 2, 4)
+N <- length(rhos) * length(sigma.1.sqs) * length(sigma.2.sqs)
+results <- data.frame(rho.start=rep(0, N),
+                      sigma.1.start=rep(0, N),
+                      sigma.2.start=rep(0, N),
+                      rho=rep(0, N),
+                      sigma.1.sq=rep(0, N),
+                      sigma.2.sq=rep(0, N),
+                      loglik=rep(0, N))
+idx <- 1
+for (rho in rhos) {
+  for (sigma.1.sq in sigma.1.sqs) {
+    for (sigma.2.sq in sigma.2.sqs) {
+      results$rho.start[idx] <- rho
+      results$sigma.1.start[idx] <- sigma.1.sq
+      results$sigma.2.start[idx] <- sigma.2.sq
+      res <- BivariateNormalEM(sigma.1.sq, sigma.2.sq, rho)
+      results$sigma.1.sq[idx] <- res$sigma.1.sq
+      results$sigma.2.sq[idx] <- res$sigma.2.sq
+      results$rho[idx] <- res$rho
+      results$loglik[idx] <- res$loglik
+      idx <- idx + 1
+    }
+  }
+}
+@
+\item Starting at multiple starting values, we get the results shown in Table 1.
+  As we can see, we converge to different estimates of
+  $\hat\rho, \hat\sigma_1^2, \hat\sigma_2^2$ depending on where we initialize.
+  This shows that there are likely multiple local maxima found by the EM
+  algorithm. By also outputting the log likelihood of the incomplete data
+  (including only the marginal probabilities for values that have \texttt{NA}),
+  we can compare the results. Although the log likelihoods are generally very
+  close to each other, we find a maximum log likelihood of $-277.60$ with
+  $\hat\rho=0.25$, $\hat\sigma_1^2=2.41$, and $\hat\sigma_2^2=1.05$.
+  Furthermore, we see that the estimates of $\sigma_1^2$ and $\sigma_2^2$ are
+  generally stable around $2.41$ and $1.04$, respectively, while the estimates
+  of $\rho$ can vary between $0.18$ and $0.25$.
+<<em-multistart-table, eval=T, echo=F, results='asis'>>=
+colnames(results) <- c("$\\rho^{(0)}$", "${\\sigma_1^2}^{(0)}$",
+                       "${\\sigma_2^2}^{(0)}$", "$\\hat\\rho$",
+                       "$\\hat\\sigma_1^2$", "$\\hat\\sigma_2^2$",
+                       "$\\hat\\ell(x)$")
+print(xtable(results, caption="EM from multiple starting values"),
+      sanitize.colnames.function = function(x){x}, include.rownames=F)
+@
+
+\end{enumerate}
 
 
+\subsection*{2}
+\begin{enumerate}[(a)]
+<<forward-backward-naive, eval=T, echo=F, cache=T>>=
+ForwardBackwardNaive <- function(x, emissions, transitions, initials) {
+  numStates <- nrow(emissions)
+  n <- length(x)
+  backward <- matrix(0, nrow=n, ncol=numStates)
+  backward[n,] <- 1
+  for (t in (n-1):1) {
+    for (i in 1:numStates) {
+      backward[t,i] <- sum(transitions[i,] * emissions[,x[t+1]] * backward[t+1,])
+    }
+  }
+  backward0 <- rep(0, numStates)
+  for (i in 1:numStates) {
+    backward0[i] <- sum(initials * emissions[,x[1]] * backward[1,])
+  }
+  forward <- matrix(0, nrow=n, ncol=numStates)
+  forward[1,] <- emissions[,x[1]] * initials
+  for (t in 1:(n-1)) {
+    for (i in 1:numStates) {
+      forward[t+1,i] <- emissions[i,x[t+1]] * sum(forward[t,] * transitions[,i])
+    }
+  }
+  list(backward=backward, forward=forward)
+}
+SimulateSequence <- function(P, E, nu, n) {
+  numStates <- nrow(P)
+  numEmitStates <- ncol(E)
+  z <- rep(0, n)
+  x <- rep(0, n)
+  z[1] <- sample(numStates, 1, prob=nu)
+  x[1] <- sample(numEmitStates, 1, prob=E[z[1],])
+  for (i in 1:(n-1)) {
+    z[i+1] <- sample(numStates, 1, prob=P[z[i],])
+    x[i+1] <- sample(numEmitStates, 1, prob=E[z[i+1],])
+  }
+  list(x=x, z=z)
+}
+P <- matrix(c(0.95, 0.05, 0.10, 0.90), byrow=T, nrow=2)
+E <- matrix(c(rep(1/6,6), rep(0.1,5), 0.5), byrow=T, nrow=2)
+nu <- c(0.5, 0.5)
+GetBreakdown <- function(seed) {
+  set.seed(seed)
+  res <- SimulateSequence(P, E, nu, 1000)
+  for (len in 300:length(res$x)) {
+    x <- res$x[1:len]
+    fb <- ForwardBackwardNaive(x, E, P, nu)
+    if (any(fb$backward[1,] == 0) || any(fb$forward[len,] == 0)) {
+      return(len)
+    }
+  }
+  return(1000)
+}
+breakdowns <- sapply(1:10, GetBreakdown)
+@
+\item Using a naive implementation of the forward-backward equations, we run
+  into numerical issues at sequence lengths of around $420$ to $440$.
+>>>>>>> 7c29be1babb19f542bc009bd0204a2ce087e9cfb
+
+\item
 
 \end{enumerate}
 
