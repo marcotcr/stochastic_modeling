@@ -288,7 +288,6 @@ breakdowns <- sapply(1:10, GetBreakdown)
 @
 \item Using a naive implementation of the forward-backward equations, we run
   into numerical issues at sequence lengths of around $420$ to $440$.
->>>>>>> 7c29be1babb19f542bc009bd0204a2ce087e9cfb
 
 
 <<forward-backward-log, eval=T, echo=F, cache=T>>=
