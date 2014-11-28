@@ -226,6 +226,66 @@ print(xtable(results, caption="EM from multiple starting values"),
 
 
 \subsection*{2}
+\begin{enumerate}[(a)]
+<<forward-backward-naive, eval=T, echo=F, cache=T>>=
+ForwardBackwardNaive <- function(x, emissions, transitions, initials) {
+  numStates <- nrow(emissions)
+  n <- length(x)
+  backward <- matrix(0, nrow=n, ncol=numStates)
+  backward[n,] <- 1
+  for (t in (n-1):1) {
+    for (i in 1:numStates) {
+      backward[t,i] <- sum(transitions[i,] * emissions[,x[t+1]] * backward[t+1,])
+    }
+  }
+  backward0 <- rep(0, numStates)
+  for (i in 1:numStates) {
+    backward0[i] <- sum(initials * emissions[,x[1]] * backward[1,])
+  }
+  forward <- matrix(0, nrow=n, ncol=numStates)
+  forward[1,] <- emissions[,x[1]] * initials
+  for (t in 1:(n-1)) {
+    for (i in 1:numStates) {
+      forward[t+1,i] <- emissions[i,x[t+1]] * sum(forward[t,] * transitions[,i])
+    }
+  }
+  list(backward=backward, forward=forward)
+}
+SimulateSequence <- function(P, E, nu, n) {
+  numStates <- nrow(P)
+  numEmitStates <- ncol(E)
+  z <- rep(0, n)
+  x <- rep(0, n)
+  z[1] <- sample(numStates, 1, prob=nu)
+  x[1] <- sample(numEmitStates, 1, prob=E[z[1],])
+  for (i in 1:(n-1)) {
+    z[i+1] <- sample(numStates, 1, prob=P[z[i],])
+    x[i+1] <- sample(numEmitStates, 1, prob=E[z[i+1],])
+  }
+  list(x=x, z=z)
+}
+P <- matrix(c(0.95, 0.05, 0.10, 0.90), byrow=T, nrow=2)
+E <- matrix(c(rep(1/6,6), rep(0.1,5), 0.5), byrow=T, nrow=2)
+nu <- c(0.5, 0.5)
+GetBreakdown <- function(seed) {
+  set.seed(seed)
+  res <- SimulateSequence(P, E, nu, 1000)
+  for (len in 300:length(res$x)) {
+    x <- res$x[1:len]
+    fb <- ForwardBackwardNaive(x, E, P, nu)
+    if (any(fb$backward[1,] == 0) || any(fb$forward[len,] == 0)) {
+      return(len)
+    }
+  }
+  return(1000)
+}
+breakdowns <- sapply(1:10, GetBreakdown)
+@
+\item Using a naive implementation of the forward-backward equations, we run
+  into numerical issues at sequence lengths of around $420$ to $440$.
 
+\item
+
+\end{enumerate}
 
 \end{document}
