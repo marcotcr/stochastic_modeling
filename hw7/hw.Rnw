@@ -115,12 +115,14 @@ n <- nrow(missdata)
 BivariateNormalIncompleteLogLikelihood <- function(sigma.1.sq, sigma.2.sq, rho) {
   ll <- 0
   for (i in 1:n) {
-    ll <- ll - log(2 * pi)
     if (is.na(x1[i])) {           # just x2
+      ll <- ll - log(2*pi)/2
       ll <- ll - log(sigma.2.sq)/2 - x2[i]^2/(2 * sigma.2.sq)
     } else if (is.na(x2[i])) {    # just x1
+      ll <- ll - log(2*pi)/2
       ll <- ll - log(sigma.1.sq)/2 - x1[i]^2/(2 * sigma.1.sq)
     } else {                      # both
+      ll <- ll - log(2 * pi)
       ll <- ll - log(sigma.1.sq)/2 - log(sigma.2.sq)/2 - log(1-rho^2)/2
       ll <- ll - (x1[i]^2/sigma.1.sq + x2[i]^2/sigma.2.sq - 2 * rho * x1[i] * x2[i] / sqrt(sigma.1.sq * sigma.2.sq))/(2 * (1-rho^2))
     }
@@ -135,14 +137,14 @@ BivariateNormalEM <- function(sigma.1.sq, sigma.2.sq, rho) {
     sigma.hat.12 <- 0
     for (i in 1:n) {
       if (is.na(x1[i])) {
-        ai <- rho * sqrt(sigma.1.sq) * x2[i] / sigma.2.sq
+        ai <- rho * sqrt(sigma.1.sq) * x2[i] / sqrt(sigma.2.sq)
         ai.sq <- sigma.1.sq * (1 - rho^2 + rho^2 * x2[i]^2 / sigma.2.sq)
       } else {
         ai <- x1[i]
         ai.sq <- x1[i]^2
       }
       if (is.na(x2[i])) {
-        bi <- rho * sqrt(sigma.2.sq) * x1[i] / sigma.1.sq
+        bi <- rho * sqrt(sigma.2.sq) * x1[i] / sqrt(sigma.1.sq)
         bi.sq <- sigma.2.sq * (1 - rho^2 + rho^2 * x1[i]^2 / sigma.1.sq)
       } else {
         bi <- x2[i]
