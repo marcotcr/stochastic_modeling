@@ -43,7 +43,7 @@ To make notation easier, we rename each sample of the observed data to $Y_i =
 The density then becomes:
 \begin{align*}
   f_{\sigma_1^2,\sigma_2^2,\rho}(x_i, y_i) =
-  \frac{1}{2\pi\sigma_1\sigma_2\sqrt{1 - \rho^2}}exp\left\{-\frac{1}{2(1 -
+  \frac{1}{2\pi\sigma_1\sigma_2\sqrt{1 - \rho^2}}\exp\left\{-\frac{1}{2(1 -
   \rho^2)}\left(\frac{x_i^2}{\sigma_1^2} + \frac{y_i^2}{\sigma_2^2} -
   \frac{2\rho x_iy_i}{\sigma_1\sigma_2}\right)\right\}
 \end{align*}
@@ -212,26 +212,21 @@ for (rho in rhos) {
   }
 }
 @
-\item Starting at multiple starting values, we get the results shown in Table 1.
-  As we can see, we converge to different estimates of
-  $\hat\rho, \hat\sigma_1^2, \hat\sigma_2^2$ depending on where we initialize.
-  This shows that there are likely multiple local maxima found by the EM
-  algorithm. By also outputting the log likelihood of the incomplete data
-  (including only the marginal probabilities for values that have \texttt{NA}),
-  we can compare the results. Although the log likelihoods are generally very
-  close to each other, we find a maximum log likelihood of $-277.60$ with
-  $\hat\rho=0.25$, $\hat\sigma_1^2=2.41$, and $\hat\sigma_2^2=1.05$.
-  Furthermore, we see that the estimates of $\sigma_1^2$ and $\sigma_2^2$ are
-  generally stable around $2.41$ and $1.04$, respectively, while the estimates
-  of $\rho$ can vary between $0.18$ and $0.25$.
-<<em-multistart-table, eval=T, echo=F, results='asis'>>=
-colnames(results) <- c("$\\rho^{(0)}$", "${\\sigma_1^2}^{(0)}$",
-                       "${\\sigma_2^2}^{(0)}$", "$\\hat\\rho$",
-                       "$\\hat\\sigma_1^2$", "$\\hat\\sigma_2^2$",
-                       "$\\hat\\ell(x)$")
-print(xtable(results, caption="EM from multiple starting values"),
-      sanitize.colnames.function = function(x){x}, include.rownames=F)
-@
+\item To see how sensitive the EM algorithm is to starting values for this
+  problem, we run it from all combinations of starting values with
+  $\rho^{(0)} = -0.5, 0, 0.5$, ${\sigma_1^2}^{(0)} = 0.5, 1, 2, 4$, and
+  ${\sigma_2^2}^{(0)} = 0.5, 1, 2, 4$. For all $3 \times 4 \times 4 = 48$
+  starting values, we arrive at the same results as in part (b). While the EM
+  algorithm is known to often be sensitive to starting value, for this problem
+  it appears to be robust.
+%<<em-multistart-table, eval=T, echo=F, results='asis'>>=
+%colnames(results) <- c("$\\rho^{(0)}$", "${\\sigma_1^2}^{(0)}$",
+%                       "${\\sigma_2^2}^{(0)}$", "$\\hat\\rho$",
+%                       "$\\hat\\sigma_1^2$", "$\\hat\\sigma_2^2$",
+%                       "$\\hat\\ell(x)$")
+%print(xtable(results, caption="EM from multiple starting values"),
+%      sanitize.colnames.function = function(x){x}, include.rownames=F)
+%@
 
 \end{enumerate}
 
