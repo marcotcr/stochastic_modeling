@@ -292,7 +292,7 @@ LogSum <- function(logA, logB) {
   if (logB > logA) {
     tmp <- logA
     logA <- logB
-    logB <- logA
+    logB <- tmp
   }
   logA + log(1 + exp(logB - logA))
 }
