@@ -292,7 +292,7 @@ LogSum <- function(logA, logB) {
   if (logB > logA) {
     tmp <- logA
     logA <- logB
-    logB <- logA
+    logB <- tmp
   }
   logA + log(1 + exp(logB - logA))
 }
@@ -319,8 +319,8 @@ ForwardBackwardLog <- function(x, emissions, transitions, initials) {
         logF <- logForward[t,j] + log(transitions[j,i])
         logForward[t+1,i] <- LogSum(logForward[t+1,i], logF)
       }
+      logForward[t+1,i] <- logForward[t+1,i] + log(emissions[i,x[t+1]])
     }
-    logForward[t+1,i] <- logForward[t+1,i] + log(emissions[i,x[t+1]])
   }
   list(logBackward=logBackward, logForward=logForward)
 }
@@ -328,6 +328,69 @@ ForwardBackwardLog <- function(x, emissions, transitions, initials) {
 \item Yes, when keeping everything on the log-scale and using the $\log(a+b)$
   formula given, we are able to succesfully compute the ($\log$) forward and
   backward probabilities without running into numerical issues.
+
+<<forward-backward-scaled, eval=T, echo=F, cache=T>>=
+ForwardBackwardRescaled <- function(x, emissions, transitions, initials) {
+  numStates <- nrow(emissions)
+  n <- length(x)
+  backward <- matrix(0, nrow=n, ncol=numStates)
+  backwardNorm <- rep(0, n)
+  backward[n,] <- 1/numStates
+  backwardNorm[n] <- numStates
+  for (t in (n-1):1) {
+    for (i in 1:numStates) {
+      backward[t,i] <- sum(transitions[i,] * emissions[,x[t+1]] * backward[t+1,])
+    }
+    backwardNorm[t] <- sum(backward[t,])
+    backward[t,] <- backward[t,] / backwardNorm[t]
+  }
+  forward <- matrix(0, nrow=n, ncol=numStates)
+  forwardNorm <- rep(0, n)
+  forward[1,] <- emissions[,x[1]] * initials
+  forwardNorm[1] <- sum(forward[1,])
+  forward[1,] <- forward[1,] / forwardNorm[1]
+  for (t in 1:(n-1)) {
+    for (i in 1:numStates) {
+      forward[t+1,i] <- emissions[i,x[t+1]] * sum(forward[t,] * transitions[,i])
+    }
+    forwardNorm[t+1] <- sum(forward[t+1,])
+    forward[t+1,] <- forward[t+1,] / forwardNorm[t+1]
+  }
+  list(backward=backward, backwardNorm=backwardNorm,
+       forward=forward, forwardNorm=forwardNorm)
+}
+# probability that t-th state takes on value i
+GetProbabilityLog <- function(forwardBackwardLog, t, i) {
+  logNumerator <- forwardBackwardLog$logForward[t,i] + forwardBackwardLog$logBackward[t,i]
+  numStates <- ncol(forwardBackwardLog$logForward)
+  logDenominator <- forwardBackwardLog$logForward[t,1] + forwardBackwardLog$logBackward[t,1]
+  for (j in 2:numStates) {
+    logDenominator <- LogSum(logDenominator, forwardBackwardLog$logForward[t,j] + forwardBackwardLog$logBackward[t,j])
+  }
+  return(exp(logNumerator - logDenominator))
+}
+# probability that t-th state takes on value i
+GetProbabilityNaive <- function(forwardBackwardNaive, t, i) {
+  numerator <- forwardBackwardNaive$forward[t,i] * forwardBackwardNaive$backward[t,i]
+  return(numerator/sum(forwardBackwardNaive$forward[t,] * forwardBackwardNaive$backward[t,]))
+}
+# probability that t-th state takes on value i
+GetProbabilityRescaled <- function(forwardBackwardRescaled, t, i) {
+  numerator <- forwardBackwardRescaled$forward[t,i] * forwardBackwardRescaled$backward[t,i]
+  return(numerator/sum(forwardBackwardRescaled$forward[t,] * forwardBackwardRescaled$backward[t,]))
+}
+#res <- SimulateSequence(P, E, nu, 10000)
+#fbLog <- ForwardBackwardLog(res$x, E, P, nu)
+#fbRescaled <- ForwardBackwardRescaled(res$x, E, P, nu)
+#fbNaive <- ForwardBackwardNaive(res$x, E, P, nu)
+#GetProbabilityLog(fbLog, 5000, 1)
+#GetProbabilityNaive(fbNaive, 5000, 1)
+#GetProbabilityRescaled(fbRescaled, 5000, 1)
+@
+\item Yes, modifying (a) to work with rescaled probabilities, we have no
+  problem with longer sequences as we did with the naive implementation from
+  (a). We get the same answers with the rescaled probabilities as we do with
+  part (b), where we compute all probabilities on the log-scale.
 
 
 \end{enumerate}
