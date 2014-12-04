@@ -392,7 +392,56 @@ GetProbabilityRescaled <- function(forwardBackwardRescaled, t, i) {
   (a). We get the same answers with the rescaled probabilities as we do with
   part (b), where we compute all probabilities on the log-scale.
 
-
 \end{enumerate}
+
+\subsection*{3}
+We analyzed the data using a hidden Markov model, with 2 hidden states,
+and conditionally upon the state a multinomial observation with 16 categories.
+We implemented the Baum-Welch algorithm with appropriately rescaled backward and
+forward probabilities, and used as stopping criteria a difference of log
+likelihoods smaller then $\epsilon = 0.01$ between iterations. We ran the
+algorithm with random initial parameters 5 times, taking the best final
+estimates (higher final log likelihood). Figure 1 shows the log likelihood over
+iterations. 
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=.6]{ll.png}
+\caption{Log likelihood per iteration of the Baum-Welch algorithm.}
+\end{figure}
+
+Figure 2 is a visualization of the assigned emission probabilities
+to each wind direction, for each hidden state. It is clear from the figure that
+two different wind patterns are picked up: one that favors northwest winds,
+and one that favors southeast winds.
+
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=.7]{grid.png}
+\caption{Emission probabilities for the two hidden states.}
+\end{figure}
+
+We used the Viterbi algorithm to estimate the most likely sequence of underlying
+states. In order to show a smoother curve (to ease up visualization), we show a
+monthly moving average of the latent states in Figure 3. We have the months in
+the x axis. We can see seasonal pattern, where the hidden state 1 is more
+pronounced between May and August, and hidden state 2 is more pronounced between
+September and March. Acording to capetown
+magazine\footnote{http://www.capetownmagazine.com/weather-cape-town/cape-town-four-seasons-in-one-day/160\_22\_17571},
+there are two noteworthy wind patterns in Capetown (close to where this data was
+collected): (1) a southeaster wind nicknamed Cape
+Doctor\footnote{http://www.capetownmagazine.com/weather/Cape-Towns-Cape-Doctor/160\_22\_17572},
+which blows from August to April, and (2)  northwestern winds that blow from May
+to August. While we don't know how trustworthy this information is (we are no
+experts in wind, South Africa, or winds in South Africa), this seems to coincide
+nicely with our results.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=.7]{mov_average.png}
+\caption{Moving average of the hidden states.}
+\end{figure}
+
+%TODO: Explain this moving average.
 
 \end{document}
