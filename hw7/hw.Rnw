@@ -402,7 +402,7 @@ forward probabilities, and used as stopping criteria a difference of log
 likelihoods smaller then $\epsilon = 0.01$ between iterations. We ran the
 algorithm with random initial parameters 5 times, taking the best final
 estimates (higher final log likelihood). Figure 1 shows the log likelihood over
-iterations. 
+EM iterations for the best run.
 \begin{figure}[h!]
 \centering
 \includegraphics[scale=.6]{ll.png}
@@ -426,15 +426,16 @@ states. In order to show a smoother curve (to ease up visualization), we show a
 monthly moving average of the latent states in Figure 3. We have the months in
 the x axis. We can see seasonal pattern, where the hidden state 1 is more
 pronounced between May and August, and hidden state 2 is more pronounced between
-September and March. Acording to capetown
-magazine\footnote{http://www.capetownmagazine.com/weather-cape-town/cape-town-four-seasons-in-one-day/160\_22\_17571},
+September and March. Acording to Capetown
+Magazine\footnote{http://www.capetownmagazine.com/weather-cape-town/cape-town-four-seasons-in-one-day/160\_22\_17571},
 there are two noteworthy wind patterns in Capetown (close to where this data was
 collected): (1) a southeaster wind nicknamed Cape
 Doctor\footnote{http://www.capetownmagazine.com/weather/Cape-Towns-Cape-Doctor/160\_22\_17572},
 which blows from August to April, and (2)  northwestern winds that blow from May
 to August. While we don't know how trustworthy this information is (we are no
 experts in wind, South Africa, or winds in South Africa), this seems to coincide
-nicely with our results.
+nicely with our results, as this is exactly the pattern we found in our
+analysis.
 
 \begin{figure}[h!]
 \centering
