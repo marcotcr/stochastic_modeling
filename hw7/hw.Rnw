@@ -52,7 +52,7 @@ The density then becomes:
 \item If there was not missing data,  log likelihood would be
 as follows, assuming we had full observed data $X$ s.t. $X_i = (a_i,b_i)$.
 \begin{align*}
-  l(\Sigma) &= c + -\frac{n}{2}ln(|\Sigma|) - \frac{1}{2}\sum_{i=1}^{n}{(X_i)^T\Sigma^{-1}X_i}
+  \ell(\Sigma) &= C - \frac{n}{2}\log(|\Sigma|) - \frac{1}{2}\sum_{i=1}^{n}{(X_i)^T\Sigma^{-1}X_i}
   \end{align*}
 %\begin{align*}
 %  L(\sigma_1^2,\sigma_2^2,\rho) &= \prod_{i=1}^{n}{f_{\sigma_1^2,\sigma_2^2,\rho}(x_i, y_i)} \\
@@ -61,13 +61,13 @@ as follows, assuming we had full observed data $X$ s.t. $X_i = (a_i,b_i)$.
 %  \left(\frac{a_i^2}{\sigma^2_1} + \frac{b_i^2}{\sigma_2^2} - \frac{2\rho
 %  a_ib_i}{\sigma_1\sigma_2} \right)}
 %\end{align*}
-In the E step of EM, we would have to evaluate $E[l(\Sigma)
+In the E step of EM, we would have to evaluate $\E[\ell(\Sigma)
 | Y, \tilde\sigma_1^2, \tilde\sigma_2^2, \tilde\rho]$, where
 $(\tilde\sigma_1^2, \tilde\sigma_2^2, \tilde\rho)$ are current guesses of
 the parameters, which we abbreviate
-to $E[l | .]$.
+to $E[\ell | .]$.
 \begin{align*}
-  E[l|.] &= c + -\frac{n}{2}ln(|\Sigma|) - \frac{1}{2}\sum_{i=1}^{n}{(E[X_i|.])^T\Sigma^{-1}E[X_i|.]}
+  \E[\ell|.] &= c + -\frac{n}{2}\log(|\Sigma|) - \frac{1}{2}\sum_{i=1}^{n}{(\E[X_i|.])^T\Sigma^{-1}\E[X_i|.]}
 \end{align*}
 We know that in the bivariate normal with zero means,
 \begin{align*}
@@ -94,17 +94,17 @@ And thus, for $X_i = (a_i,b_i)$ and $Y_i = (x_i, y_i)$:
   \end{cases}
 \end{align*}
 
-For the M step, we would optimize $E[l|.]$. We know that the MLE for $\Sigma$,
-which optimizes the log likelihood, is:
+For the M step, we would optimize $\E[\ell|.]$. We know that when $\mu = 0$ the
+MLE for $\Sigma$, which optimizes the log likelihood, is:
 \begin{align*}
-\hat{\Sigma} = \frac{1}{n}\sum_{i=1}^{n}{E[X_i]E[X_i^T]}
+\hat{\Sigma} = \frac{1}{n}\sum_{i=1}^{n}{\E[X_i X_i^T]}
 \end{align*}
 And thus:
 \begin{align*}
-\hat{\sigma_1^2} &= \frac{1}{n}\sum_{i=1}^{n}{E[a_i^2|.]}\\
-\hat{\sigma_2^2} &= \frac{1}{n}\sum_{i=1}^{n}{E[b_i^2|.]}\\
-\hat{\rho} &=
-\frac{1}{n\sqrt{\hat{\sigma_1^2}{\hat{\sigma_2^2}}}}\sum_{i=1}^{n}{E[a_i|.]E[b_i|.]}
+\hat\sigma_1^2 &= \frac{1}{n}\sum_{i=1}^{n}{\E[a_i^2|.]}\\
+\hat\sigma_2^2 &= \frac{1}{n}\sum_{i=1}^{n}{\E[b_i^2|.]}\\
+\hat\rho &=
+\frac{1}{n\hat\sigma_1 \hat\sigma_2}\sum_{i=1}^{n}{\E[a_i|.] \E[b_i|.]}
 \end{align*}
 
 <<normal-em, eval=T, echo=F>>=
@@ -329,36 +329,34 @@ ForwardBackwardLog <- function(x, emissions, transitions, initials) {
   formula given, we are able to succesfully compute the ($\log$) forward and
   backward probabilities without running into numerical issues.
 
-<<forward-backward-scaled, eval=T, echo=F, cache=T>>=
-ForwardBackwardRescaled <- function(x, emissions, transitions, initials) {
-  numStates <- nrow(emissions)
-  n <- length(x)
-  backward <- matrix(0, nrow=n, ncol=numStates)
-  backwardNorm <- rep(0, n)
-  backward[n,] <- 1/numStates
-  backwardNorm[n] <- numStates
-  for (t in (n-1):1) {
-    for (i in 1:numStates) {
-      backward[t,i] <- sum(transitions[i,] * emissions[,x[t+1]] * backward[t+1,])
-    }
-    backwardNorm[t] <- sum(backward[t,])
-    backward[t,] <- backward[t,] / backwardNorm[t]
+<<forward-backward-scaled, eval=T, echo=F>>=
+ForwardBackwardRescaled <- function(Y, P, E, nu) {
+  n = length(Y)
+  num_states <- nrow(P)
+  b = matrix(1, n, num_states)
+  a = matrix(0, n, num_states)
+  c = rep(0, n)
+  for (i in 1:num_states) {
+    a[1,i] = nu[i] * E[i, Y[1]]
   }
-  forward <- matrix(0, nrow=n, ncol=numStates)
-  forwardNorm <- rep(0, n)
-  forward[1,] <- emissions[,x[1]] * initials
-  forwardNorm[1] <- sum(forward[1,])
-  forward[1,] <- forward[1,] / forwardNorm[1]
+  c[1] = sum(a[1,])
+  a[1,] = a[1,] / c[1]
   for (t in 1:(n-1)) {
-    for (i in 1:numStates) {
-      forward[t+1,i] <- emissions[i,x[t+1]] * sum(forward[t,] * transitions[,i])
+    for (i in 1:num_states) {
+      a[t+1,i] = E[i, Y[t+1]] * sum(a[t,] * P[,i])
     }
-    forwardNorm[t+1] <- sum(forward[t+1,])
-    forward[t+1,] <- forward[t+1,] / forwardNorm[t+1]
+    c[t+1] = sum(a[t+1,])
+    a[t+1,] = a[t+1,] / c[t+1]
   }
-  list(backward=backward, backwardNorm=backwardNorm,
-       forward=forward, forwardNorm=forwardNorm)
+  for (t in (n-1):1 ) {
+    for (i in 1:num_states ) {
+      b[t,i] = sum(P[i,] * E[, Y[t+1]] * b[t+1,]) / c[t+1]
+    }
+  }
+  list(a=a, b=b, c=c)
 }
+@
+<<forward-backward-probs, eval=T, echo=F>>=
 # probability that t-th state takes on value i
 GetProbabilityLog <- function(forwardBackwardLog, t, i) {
   logNumerator <- forwardBackwardLog$logForward[t,i] + forwardBackwardLog$logBackward[t,i]
@@ -376,8 +374,7 @@ GetProbabilityNaive <- function(forwardBackwardNaive, t, i) {
 }
 # probability that t-th state takes on value i
 GetProbabilityRescaled <- function(forwardBackwardRescaled, t, i) {
-  numerator <- forwardBackwardRescaled$forward[t,i] * forwardBackwardRescaled$backward[t,i]
-  return(numerator/sum(forwardBackwardRescaled$forward[t,] * forwardBackwardRescaled$backward[t,]))
+  forwardBackwardRescaled$a[t,i] * forwardBackwardRescaled$b[t,i]
 }
 #res <- SimulateSequence(P, E, nu, 10000)
 #fbLog <- ForwardBackwardLog(res$x, E, P, nu)
@@ -403,7 +400,7 @@ likelihoods smaller then $\epsilon = 0.01$ between iterations. We ran the
 algorithm with random initial parameters 5 times, taking the best final
 estimates (higher final log likelihood). Figure 1 shows the log likelihood over
 EM iterations for the best run.
-\begin{figure}[h!]
+\begin{figure}[H]
 \centering
 \includegraphics[scale=.6]{ll.png}
 \caption{Log likelihood per iteration of the Baum-Welch algorithm.}
@@ -412,37 +409,137 @@ EM iterations for the best run.
 Figure 2 is a visualization of the assigned emission probabilities
 to each wind direction, for each hidden state. It is clear from the figure that
 two different wind patterns are picked up: one that favors northwest winds,
-and one that favors southeast winds.
+and one that favors southeast winds. The transition matrix we find with the
+Baum-Welch algorithm is
+\begin{align*}
+  \hat{P}
+  &= \left[\begin{array}{cc}
+    0.9631 & 0.0369 \\
+    0.0313 & 0.9687
+  \end{array}\right]
+\end{align*}
+so the latent state is far more likely to self-transition than to switch. This
+makes some intuitive sense given that state 1 shows more north-westernly winds
+while state 2 shows more south-easternly winds, and we would not expect
+frequent changes between the two.
 
-
-\begin{figure}[h!]
+\begin{figure}[H]
 \centering
 \includegraphics[scale=.7]{grid.png}
 \caption{Emission probabilities for the two hidden states.}
 \end{figure}
 
 We used the Viterbi algorithm to estimate the most likely sequence of underlying
-states. In order to show a smoother curve (to ease up visualization), we show a
-monthly moving average of the latent states in Figure 3. We have the months in
-the x axis. We can see seasonal pattern, where the hidden state 1 is more
+states over the four years of data. However, due to fairly frequent changes
+between latent states, a raw plot of the latent states over the four years is
+not very helpful. Instead, we show a smoothed version of the latent states. We
+use a sliding window of one month and compute a weighted average within that
+window, with weights proportional to the density of a normal distribution with
+standard deviation one quarter of the window size (ie like a discrete
+convolution). In Figure 3, we show the
+resulting smoothed latent states, with the months along the x-axis.
+We can see seasonal pattern, where the hidden state 1 is more
 pronounced between May and August, and hidden state 2 is more pronounced between
-September and March. Acording to Capetown
+September and March. According to Capetown
 Magazine\footnote{http://www.capetownmagazine.com/weather-cape-town/cape-town-four-seasons-in-one-day/160\_22\_17571},
 there are two noteworthy wind patterns in Capetown (close to where this data was
 collected): (1) a southeaster wind nicknamed Cape
 Doctor\footnote{http://www.capetownmagazine.com/weather/Cape-Towns-Cape-Doctor/160\_22\_17572},
-which blows from August to April, and (2)  northwestern winds that blow from May
+which blows from August to April, and (2) northwestern winds that blow from May
 to August. While we don't know how trustworthy this information is (we are no
 experts in wind, South Africa, or winds in South Africa), this seems to coincide
 nicely with our results, as this is exactly the pattern we found in our
 analysis.
 
-\begin{figure}[h!]
+\begin{figure}[H]
 \centering
 \includegraphics[scale=.7]{mov_average.png}
 \caption{Moving average of the hidden states.}
 \end{figure}
 
-%TODO: Explain this moving average.
+
+\newpage
+\appendix
+\subsection*{Code}
+\subsubsection*{1(b) EM for bivariate Normal missing data}
+<<normal-em, eval=F, echo=T>>=
+@
+\subsubsection*{1(c) Many random starting values}
+<<em-random-start, eval=F, echo=T>>=
+@
+\subsubsection*{2(a) Naive forward-backward}
+<<forward-backward-naive, eval=F, echo=T>>=
+@
+\subsubsection*{2(b) Log-scale forward-backward}
+<<forward-backward-log, eval=F, echo=T>>=
+@
+\subsubsection*{2(c) Scaled forward-backward}
+<<forward-backward-scaled, eval=F, echo=T>>=
+@
+\subsubsection*{3}
+We implemented the Baum-Welch and Viterbi algorithms, in addition to using the
+(rescaled) Forward-Backward algorithm we implemented in problem 2(c). Code for
+the relevant functions is replicated below. For any other code (e.g. for plots)
+let us know.
+<<baum-welch-etc, eval=F, echo=T>>=
+# Probability of state t (vector). fb is the return of the function above
+Gamma <- function(fb, t) {
+  return(fb$a[t,] * fb$b[t,])
+}
+# Probability of state t-1 = i, t=j. fb is the return of the function above
+Csi <- function(fb, t, i, j, E, P) {
+  1 / fb$c[t] * fb$a[t - 1, i] * E[j, Y[t]] * P[i,j] * fb$b[t,j]
+}
+BaumWelch <- function(Y, theta0) {
+  n = length(Y)
+  nu = theta0$nu
+  P = theta0$P
+  E = theta0$E
+  num_states <- nrow(P)
+  previous_logpy = 0
+  while (TRUE) {
+    z = ForwardBackwardRescaled(Y, P, E, nu)
+    logpy = sum(log(z$c))
+    nu = Gamma(z, 1)
+    new_P = P
+    # Computing P
+    for (i in 1:num_states) {
+      for (j in 1:num_states) {
+        new_P[i,j] = sum(Csi(z, 2:n, i, j, E, P))
+      }
+      new_P[i,] = new_P[i,] / sum(new_P[i,])
+    }
+    P = new_P
+    # Computing E
+    norm = apply(Gamma(z, 1:n),2, sum)
+    for (i in 1:16) {
+      E[,i] = apply((Y[1:n] == i) * Gamma(z, 1:n), 2, sum) / norm
+    }
+    if (abs(logpy - previous_logpy) < .01) {
+      break;
+    }
+    previous_logpy = logpy
+    print(logpy)
+  }
+  return (list(nu=nu,P=P,E=E))
+}
+Viterbi <- function(Y, P, E, nu) {
+  n = length(Y)
+  num_states <- nrow(P)
+  d = matrix(0, n, num_states)
+  f = matrix(0, n, num_states)
+  d[1,] = log(nu) + log(E[,Y[1]])
+  for (t in 2:n) {
+    d[t,] = apply(d[t-1,] + log(P), 2, max) + log(E[, Y[t]])
+    f[t,] = apply(d[t-1,] + log(P), 2, which.max)
+  }
+  y = rep(0, n)
+  y[n] = which.max(d[n,])
+  for (t in (n-1):1) {
+    y[t] = f[t+1,y[t+1]]
+  }
+  return (y)
+}
+@
 
 \end{document}
