@@ -419,10 +419,9 @@ Baum-Welch algorithm is
   \end{array}\right]
 \end{align*}
 so the latent state is far more likely to self-transition than to switch. This
-makes some intuitive sense given that state 1 shows more north-westernly winds
-while state 2 shows more south-easternly winds, and we would not expect
-frequent changes between the two.
-
+makes some intuitive sense, since the observations are ``hourly''. We
+would expect changes between states to be infrequent, given that state 1 shows more north-westernly winds
+while state 2 shows more south-easternly winds.
 \begin{figure}[H]
 \centering
 \includegraphics[scale=.7]{grid.png}
